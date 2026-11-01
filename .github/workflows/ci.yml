@@ -80,6 +80,12 @@ jobs:
       - name: Run tests
         run: python -m pytest -q -p no:cacheprovider
 
+      - name: Show LaTeX errors from failed renders
+        if: failure()
+        run: |
+          find /tmp/pytest-of-runner -path '*failed-*' -name '*.log' 2>/dev/null | head -n 3 |
+            while read -r log; do echo "== $log"; grep -A6 -E '^!|not found' "$log" | head -n 40; done
+
   static-js:
     name: node --check (static JS)
     runs-on: ubuntu-latest
