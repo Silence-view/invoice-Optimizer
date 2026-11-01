@@ -1,0 +1,57 @@
+{
+  "engine": "mermaid",
+  "version": "11.12.0",
+  "check": "Parser validation; layout of editable Mermaid sources depends on renderer",
+  "results": [
+    {
+      "file": "01-system-and-processing-flow.mmd",
+      "pass": true,
+      "diagram_type": "flowchart-v2",
+      "sha256": "fc408f960d7edf06622932bfdbfd535976ba11101fbd5bfd268e8edb7c6ee256"
+    },
+    {
+      "file": "02-realtime-review-sequence.mmd",
+      "pass": true,
+      "diagram_type": "sequence",
+      "sha256": "09167ab699f7b8fba7e62bf14689ad77a8087910665e3c1355a37a0ddd99c548"
+    },
+    {
+      "file": "03-billing-dispatch-sequence.mmd",
+      "pass": true,
+      "diagram_type": "sequence",
+      "sha256": "388c51d31519cc94e273fff78b48d87a90df906b3808c3f27ce74c8062e5f0b7"
+    },
+    {
+      "file": "04-movement-review-classes.mmd",
+      "pass": true,
+      "diagram_type": "class",
+      "sha256": "0d93a2e682d4dd0a5bf5144e30957947138622dadba9a59cec43278c7a588574"
+    },
+    {
+      "file": "05-billing-delivery-classes.mmd",
+      "pass": true,
+      "diagram_type": "class",
+      "sha256": "aaaee507eb1adaf77334af0798c51c74577d7b52a8d0b306b34d89642a7e0123"
+    }
+  ],
+  "rendered_flowchart": {
+    "source": "mermaid/01-system-and-processing-flow.mmd",
+    "source_sha256": "fc408f960d7edf06622932bfdbfd535976ba11101fbd5bfd268e8edb7c6ee256",
+    "engine": "Mermaid 11.12.0 / Playwright Chromium headless shell 151.0.7922.34",
+    "png_pixels": [
+      4373,
+      2520
+    ],
+    "visual_review": "Inspected rendered image: no observed label overlap or clipping; explicit LR-to-result-store path.",
+    "outputs": [
+      {
+        "path": "diagrams/01-system-and-processing-flow.svg",
+        "sha256": "0543a82bc8f5d72fc893fb1d6f2322f14cf91b7d4eb3370abdf21404525cc22c"
+      },
+      {
+        "path": "diagrams/01-system-and-processing-flow.png",
+        "sha256": "b4df7542ad6e901f9fce5ddc7d1c68f83ee34b2a3d2800c6dc8dc0bb58aee703"
+      }
+    ]
+  }
+}

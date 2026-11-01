@@ -1,0 +1,11 @@
+{
+  "renderer_version": "uk-a4-v1",
+  "document_sha256": "5512214362a5b16ff8c2a1babd620e080640437da109a7c2e43b9a104483996e",
+  "template_sha256": "802dcbedf0d74ceab1e02c829bde2259f526b63090958f56bf1190a99248ec1a",
+  "tex_sha256": "9392ccc2baf07ddb5d7dbd76192fd25d617d7afdfd92beba78b342209edaabf6",
+  "pdf_sha256": "02b11ce37103894e337d3286266f93e51ed334f75a42740c1c04788f50c82633",
+  "compiler": "/Library/TeX/texbin/pdflatex",
+  "passes": 2,
+  "shell_escape": false,
+  "timeout_seconds_per_pass": 45
+}

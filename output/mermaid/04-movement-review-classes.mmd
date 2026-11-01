@@ -1,0 +1,176 @@
+classDiagram
+    direction TB
+
+    %% PROPOSED conceptual domain model. No implementation or capacity claim.
+    %% This is a domain subset, not a complete relational schema.
+
+    class Customer {
+        <<stable_identity>>
+        +UUID customer_id
+        +string legal_name
+        +string status
+        +resolveIdentity()
+    }
+
+    class IngestionBatch {
+        <<source_delivery>>
+        +UUID batch_id
+        +string source_id
+        +string source_cursor
+        +string raw_object_uri
+        +string checksum
+        +datetime received_at
+        +string status
+        +validateManifest()
+        +commitCheckpoint()
+    }
+
+    class SourceObservation {
+        <<immutable_source_version>>
+        +UUID observation_id
+        +UUID batch_id
+        +string source_record_key
+        +string source_revision
+        +string raw_record_locator
+        +string payload_hash
+        +datetime event_at
+        +datetime ingested_at
+        +parse()
+        +validateSchema()
+    }
+
+    class Movement {
+        <<aggregate_root>>
+        +UUID movement_id
+        +UUID customer_id
+        +UUID current_version_id
+        +string lifecycle_state
+        +appendVersion(expectedVersion)
+    }
+
+    class MovementVersion {
+        <<immutable_business_state>>
+        +UUID version_id
+        +UUID movement_id
+        +int version_no
+        +Decimal amount
+        +string currency
+        +datetime event_at
+        +date accounting_date
+        +string movement_type
+        +UUID supersedes_version_id
+        +datetime created_at
+        +checkBillingEligibility()
+    }
+
+    class EvidenceLink {
+        <<source_to_movement_association>>
+        +UUID link_id
+        +UUID observation_id
+        +UUID movement_version_id
+        +UUID group_revision_id
+        +string relation_type
+        +string match_state
+        +Decimal allocation_amount
+        +string allocation_currency
+        +string decision_ref
+        +propose()
+        +confirm()
+        +reject()
+    }
+
+    class ReconciliationGroup {
+        <<versioned_reconciliation>>
+        +UUID group_revision_id
+        +UUID group_id
+        +int revision_no
+        +string matching_rule_version
+        +string status
+        +string totals_by_currency_ref
+        +string differences_by_currency_ref
+        +datetime availability_deadline
+        +checkCardinality()
+        +compareTotals()
+        +resolveAsNewRevision()
+    }
+
+    class Assessment {
+        <<immutable_result>>
+        +UUID assessment_id
+        +UUID observation_id
+        +UUID movement_version_id
+        +UUID group_revision_id
+        +string assessment_type
+        +string rule_or_model_version
+        +string outcome
+        +float score
+        +string reason_codes
+        +string feature_snapshot_ref
+        +datetime feature_cutoff
+        +datetime evaluated_at
+        +evaluate()
+        +attachEvidence()
+    }
+
+    class AnomalyCase {
+        <<human_review_workflow>>
+        +UUID case_id
+        +string deduplication_key
+        +string severity
+        +UUID owner_id
+        +string state
+        +datetime due_at
+        +string resolution_code
+        +assign()
+        +triage()
+        +resolve()
+        +requestNotification()
+    }
+
+    class CorrectionRequest {
+        <<auditable_command>>
+        +UUID correction_id
+        +UUID case_id
+        +UUID expected_version_id
+        +string proposed_patch
+        +string reason
+        +UUID requested_by
+        +UUID reviewed_by
+        +string state
+        +UUID result_version_id
+        +validate()
+        +approve()
+        +applyWithVersionCheck()
+    }
+
+    Customer "1" --> "0..*" Movement : owns
+    IngestionBatch "1" --> "0..*" SourceObservation : contains
+    Movement "1" --> "1..*" MovementVersion : has versions
+    SourceObservation "1" --> "0..*" EvidenceLink : supplies evidence
+    MovementVersion "1" --> "0..*" EvidenceLink : has provenance
+    ReconciliationGroup "0..1" --> "0..*" EvidenceLink : groups mappings
+
+    SourceObservation "0..1" <-- "0..*" Assessment : source subject
+    MovementVersion "0..1" <-- "0..*" Assessment : movement subject
+    ReconciliationGroup "0..1" <-- "0..*" Assessment : reconciliation subject
+
+    AnomalyCase "0..1" --> "1..*" Assessment : collects flags
+    AnomalyCase "1" --> "0..*" CorrectionRequest : receives proposals
+    MovementVersion "1" <-- "0..*" CorrectionRequest : expected base
+    CorrectionRequest "0..1" --> "0..1" MovementVersion : produces replacement
+
+    note for IngestionBatch "PROPOSED MODEL, NOT IMPLEMENTED. Original source objects and published manifests are immutable. Operational processing status may progress. A database transaction commits processing results and their checkpoint together; object-store publication has a separate recovery boundary."
+
+    note for SourceObservation "Source keys, revisions and event time may initially be unknown. Preserve the raw observation even when parsing or customer identification fails. Source observations are never overwritten by a review action. A new source delivery/version is retained separately."
+
+    note for EvidenceLink "Many-to-many provenance is intentional. One link connects exactly one source observation and one movement version. match_state is PROPOSED, CONFIRMED or REJECTED. Uncertain matches cannot silently become billing evidence. Allocations and cardinality follow the source contract; do not sum a many-to-many join blindly. Matching decisions retain audit history."
+
+    note for ReconciliationGroup "Each group_revision_id is an immutable reconciliation revision. Corrections create a new revision. Reconcile within currency; conversions require pinned rate and rounding rules. Missing counterpart data remains PENDING until its agreed availability deadline. Source completeness is a separate control from matching the records already received."
+
+    note for Assessment "FORMAL SUBJECT CONSTRAINT: exactly one of observation_id, movement_version_id and group_revision_id is non-null. Each subject association therefore has multiplicity 0..1 per assessment. Enforce XOR plus foreign keys in the physical schema. PASS, FAIL, PENDING and UNAVAILABLE are distinct; a missing score is null, never zero. Model scores supplement deterministic controls."
+
+    note for MovementVersion "All money uses exact Decimal plus an explicit currency and rounding rule. Only model scores use floating point. A billable version needs confirmed provenance and all required controls. Feature snapshots use only information available by the decision cutoff. Corrections produce a new version and invalidate affected derived results; issued invoices follow the separate adjustment process."
+
+    note for CorrectionRequest "Each request targets exactly one expected movement version and produces zero or one replacement. An APPLIED request must produce exactly one new version on the same Movement. Compare expected_version_id with current_version_id atomically; stale requests fail. The operator supplies a proposal through Excel/web UI; the authenticated Python API applies authorization and validation. No source overwrite is implied."
+
+    note for AnomalyCase "Each case contains at least one assessment; an assessment belongs to at most one case in this subset. Source problems can exist before customer identity is known: route them to a configured fallback owner. Emit one logical notification for each new flag identity, deduplicating retries. Grouping/digests require an explicit policy choice. Notification delivery, user roles and the append-only audit ledger are omitted from this sheet."

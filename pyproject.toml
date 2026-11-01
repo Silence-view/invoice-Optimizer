@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "invoice-optimizer"
+version = "0.1.0"
+description = "Auditable invoice automation with synthetic UK demonstrations"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "Proprietary"}
+authors = [{name = "Silence-view"}]
+classifiers = [
+  "License :: Other/Proprietary License",
+  "Private :: Do Not Upload",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Framework :: FastAPI",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "sqlalchemy>=2.0.36,<3",
+  "psycopg[binary]>=3.2,<4", "pydantic>=2.10,<3", "python-dotenv>=1,<2",
+  "jinja2>=3.1.6,<4", "scikit-learn>=1.5,<2", "numpy>=1.26,<3",
+  "pyarrow>=18,<24", "duckdb>=1.2,<2", "joblib>=1.4,<2", "threadpoolctl>=3.7,<4",
+  "openpyxl>=3.1.5,<4", "python-multipart>=0.0.20,<1", "itsdangerous>=2.2,<3"
+]
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "httpx>=0.27,<1", "pypdf>=5,<7"]
+[project.scripts]
+invoice-optimizer = "invoice_optimizer.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+invoice_optimizer = ["templates/*", "templates/packs/*/*", "static/*"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

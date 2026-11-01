@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: pytest (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # pyproject.toml: requires-python = ">=3.11"
+        python-version: ["3.11", "3.12"]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          # Throwaway credentials for the CI service container only.
+          POSTGRES_USER: invoice
+          POSTGRES_PASSWORD: invoice-ci-only
+          POSTGRES_DB: invoice_optimizer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U invoice -d invoice_optimizer"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://invoice:invoice-ci-only@127.0.0.1:5432/invoice_optimizer
+      INVOICE_SYNTHETIC: "1"
+      INVOICE_PROVIDER: simulated
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install LaTeX and Poppler
+        # Same packages as the Dockerfile. The document tests compile real PDFs
+        # with pdflatex and fail (not skip) when it is missing.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended texlive-fonts-extra poppler-utils
+          pdflatex --version | head -n 1
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock.txt
+            pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock.txt
+          python -m pip install --no-deps -e .
+          python -m pip check
+
+      - name: Run tests
+        run: python -m pytest -q -p no:cacheprovider
+
+  static-js:
+    name: node --check (static JS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Syntax-check browser scripts and verification runners
+        run: |
+          set -euo pipefail
+          for f in src/invoice_optimizer/static/*.js scripts/*.cjs scripts/*.mjs; do
+            echo "node --check $f"
+            node --check "$f"
+          done

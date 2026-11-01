@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="/static/theme.js?v=2026.11.6"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Invoice Operations</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/tokens.css?v=2026.11.6">
+  <link rel="stylesheet" href="/static/app.css?v=2026.11.6">
+  <link rel="stylesheet" href="/static/card_deck.css?v=2026.11.6">
+  <link rel="stylesheet" href="/static/risk_bars.css?v=2026.11.6">
+  <link rel="stylesheet" href="/static/swipe_pdf.css?v=2026.11.6">
+  <link rel="stylesheet" href="/static/market.css?v=2026.11.6">
+  <script src="/static/card_deck.js?v=2026.11.6" defer></script>
+  <script src="/static/swipe_workspace.js?v=2026.11.6" defer></script>
+  <script src="/static/risk_bars.js?v=2026.11.6" defer></script>
+  <script src="/static/swipe_pdf.js?v=2026.11.6" defer></script>
+  <script src="/static/charts.js?v=2026.11.6" defer></script>
+  <script src="/static/shortcuts.js?v=2026.11.6" defer></script>
+  <script src="/static/motion.js?v=2026.11.6" defer></script>
+  <script src="/static/app.js?v=2026.11.6" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <section id="login-screen" class="login-screen" aria-labelledby="welcome-title" hidden>
+    <div class="login-card">
+      <div class="brand-mark" aria-hidden="true">io</div>
+      <p class="eyebrow">INVOICE OPERATIONS</p>
+      <h1 id="welcome-title">A clear view of every invoice.</h1>
+      <p class="muted">Review movements, approve monthly invoices and follow delivery from one workspace.</p>
+      <span class="badge simulation">SYNTHETIC SIMULATION</span>
+      <div class="login-modes" aria-label="Access method"><button type="button" data-login-mode="personal">Personal account</button><button type="button" data-login-mode="legacy">Read-only access</button><button type="button" id="setup-mode" data-login-mode="setup" hidden>First account setup</button></div>
+      <form id="personal-login-form" class="stack">
+        <label for="operator-username">Username</label><input id="operator-username" name="username" required minlength="3" maxlength="80" autocomplete="username" autocapitalize="none" spellcheck="false">
+        <label for="operator-password">Personal password</label><input id="operator-password" name="password" type="password" required maxlength="256" autocomplete="current-password">
+        <p class="hint">Use your own account. Decisions record your stable user ID and name.</p><button class="primary" type="submit">Sign in</button>
+      </form>
+      <form id="login-form" class="stack" hidden>
+        <div class="notice warning small">Shared-token access is read-only. It cannot identify an individual reviewer or authorise changes.</div>
+        <label for="access-token">Shared workspace token</label><input id="access-token" name="token" type="password" required autocomplete="off" spellcheck="false">
+        <button class="primary" type="submit">Open read-only workspace</button>
+      </form>
+      <form id="bootstrap-form" class="stack" hidden>
+        <div class="notice">Create the first personal administrator account. Future actions will use this identity; past shared-token actions remain unattributed.</div>
+        <label for="setup-token">Workspace setup token</label><input id="setup-token" name="setup_token" type="password" required autocomplete="off" spellcheck="false">
+        <label for="setup-username">Your username</label><input id="setup-username" name="username" required minlength="3" maxlength="80" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. alex.smith">
+        <label for="setup-name">Your display name</label><input id="setup-name" name="display_name" required maxlength="120" autocomplete="name" placeholder="Name recorded with your decisions">
+        <label for="setup-password">Personal password · at least 12 characters</label><input id="setup-password" name="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password">
+        <label for="setup-password-confirm">Confirm personal password</label><input id="setup-password-confirm" type="password" required minlength="12" maxlength="256" autocomplete="new-password">
+        <button class="primary" type="submit">Create my administrator account</button>
+      </form>
+      <p id="login-error" role="alert" class="error-text" hidden></p>
+      <p class="small muted">Synthetic records only. No customer emails are sent.</p>
+    </div>
+  </section>
+  <div id="workspace" class="app-shell" hidden>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">io</span><span class="brand-text">Invoice<span class="brand-sub">OPERATIONS</span></span></a>
+      <div class="workspace-label">YOUR WORKSPACE</div>
+      <nav aria-label="Main navigation" id="navigation">
+        <p class="nav-group-label" id="nav-group-work">Work</p>
+        <div class="nav-group" role="group" aria-labelledby="nav-group-work">
+          <button data-tab="overview" class="nav-button active" aria-current="page" data-tooltip="Overview"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></span><span class="nav-label">Overview</span></button>
+          <button data-tab="review" class="nav-button" data-tooltip="Review queue"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><circle cx="8" cy="8" r="6"/><path d="M5.5 8.2l1.7 1.7 3.3-3.6"/></svg></span><span class="nav-label">Review queue</span> <span id="review-count" class="nav-count" hidden></span></button>
+          <button data-tab="invoices" class="nav-button" data-tooltip="Invoices"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3M6 8h4.5M6 10.5h4.5"/></svg></span><span class="nav-label">Invoices</span></button>
+          <button data-tab="insights" class="nav-button" data-tooltip="Insights"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><path d="M2 14h12"/><path d="M4 11.5V8.5M8 11.5V4M12 11.5V6.5"/></svg></span><span class="nav-label">Insights</span></button>
+        </div>
+        <p class="nav-group-label" id="nav-group-operations">Operations</p>
+        <div class="nav-group" role="group" aria-labelledby="nav-group-operations">
+          <button data-tab="delivery" class="nav-button" data-tooltip="Delivery"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><path d="M14 2L7 9M14 2l-4.5 12-2.5-5-5-2.5z"/></svg></span><span class="nav-label">Delivery</span></button>
+          <button data-tab="data" class="nav-button" data-tooltip="Data &amp; model"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><ellipse cx="8" cy="3.5" rx="5" ry="2"/><path d="M3 3.5v9c0 1.1 2.2 2 5 2s5-.9 5-2v-9M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/></svg></span><span class="nav-label">Data &amp; model</span></button>
+          <button data-tab="email" class="nav-button" data-tooltip="Email setup"><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M2 4l6 5 6-5"/></svg></span><span class="nav-label">Email setup</span></button>
+          <button data-tab="team" id="team-navigation" class="nav-button" data-tooltip="Team access" hidden><span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16" focusable="false"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4M10.5 3.2a2.5 2.5 0 010 4.6M12 9.8c1.5.5 2.5 1.8 2.5 3.7"/></svg></span><span class="nav-label">Team access</span></button>
+        </div>
+      </nav>
+      <div class="sidebar-note"><span class="small-label">QUICK SEARCH</span><p>Press <kbd>⌘K</kbd> or <kbd>/</kbd></p><span class="muted small">Jump to any page, movement ID or action. Every decision is recorded.</span></div>
+      <button id="logout" class="quiet logout">Sign out <span aria-hidden="true">↗</span></button>
+    </aside>
+    <div class="content-shell">
+      <header class="topbar">
+        <div class="topbar-start">
+          <button id="sidebar-toggle" type="button" class="icon-button sidebar-toggle" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 2.5v11"/></svg></button>
+          <span class="badge simulation" id="mode-badge">SIMULATION</span><span class="topbar-caption">Your billing workspace</span>
+        </div>
+        <button id="command-trigger" type="button" class="command-trigger" aria-haspopup="dialog" aria-controls="command-palette" aria-keyshortcuts="Meta+K Control+K"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span class="command-trigger-label">Search pages, movements, actions…</span><kbd>⌘K</kbd></button>
+        <div class="topbar-end">
+          <div class="connection"><span id="connection-dot" class="connection-dot"></span><span id="connection-label">Connecting</span></div>
+          <button id="refresh" class="icon-button" title="Refresh current view" aria-label="Refresh current view"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.5 8a5.5 5.5 0 11-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg></button>
+          <button id="theme-toggle" type="button" class="icon-button" aria-pressed="false" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="icon icon-moon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.5 9.5A5.5 5.5 0 116.5 2.5a4.5 4.5 0 007 7z"/></svg><svg class="icon icon-sun" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.1 3.1l1 1M11.9 11.9l1 1M3.1 12.9l1-1M11.9 4.1l1-1"/></svg></button>
+          <button id="density-toggle" type="button" class="icon-button" aria-pressed="false" aria-label="Use compact density" title="Use compact density"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 3.5h12M2 8h12M2 12.5h12"/></svg></button>
+          <button id="appearance-button" type="button" class="icon-button" aria-haspopup="dialog" aria-label="Appearance settings" title="Appearance settings" hidden><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h7M12 4.5h2M2 11.5h2M7 11.5h7"/><circle cx="10.5" cy="4.5" r="1.5"/><circle cx="5.5" cy="11.5" r="1.5"/></svg></button>
+          <button id="operator-profile" class="identity-button" aria-label="Signed-in identity and sign out"><strong id="operator-display">Identity unavailable</strong><span id="operator-description"></span></button>
+        </div>
+      </header>
+      <main id="main" tabindex="-1">
+        <div class="page-heading"><div><p class="eyebrow" id="page-eyebrow">WORKSPACE AT A GLANCE</p><h1 id="page-title">Overview</h1><p id="page-description" class="muted">From source movements to approved invoices.</p></div><div class="heading-meta"><span class="small-label">LAST SYNCED</span><span id="last-synced">Waiting for data</span></div></div>
+        <section id="case-workbench" class="case-workbench" aria-label="Pinned case workbench" hidden></section>
+        <div id="global-error" class="notice error" role="alert" hidden></div>
+        <div id="identity-notice" class="notice warning" hidden><strong>Legacy shared access · read-only.</strong> An individual reviewer is unknown. Sign in with a personal account to record decisions or make changes. <button class="text-button" data-action="switch-personal">Use personal account</button></div>
+        <div id="update-notice" class="notice" hidden><span id="update-notice-message">New data is available. Your open form is preserved.</span> <button id="load-update" class="text-button">Refresh list</button></div>
+        <section id="tab-content" aria-busy="true"><div class="empty-state">Loading your workspace…</div></section>
+        <footer class="main-footer"><span>UK invoice workflow · Synthetic demonstration</span><span>Human approval is required before dispatch.</span></footer>
+      </main>
+    </div>
+  </div>
+  <dialog id="detail-dialog" aria-labelledby="detail-title">
+    <div class="dialog-header"><div><p class="eyebrow" id="detail-eyebrow">REVIEW</p><h2 id="detail-title">Details</h2></div><button id="close-detail" class="icon-button" aria-label="Close details"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+    <div id="dialog-case-tabs" hidden></div>
+    <div id="detail-content"></div>
+  </dialog>
+  <dialog id="command-palette" class="command-palette" aria-label="Command palette"></dialog>
+  <div id="appearance-panel" class="popover appearance-panel" popover role="dialog" aria-label="Appearance" aria-labelledby="appearance-title"></div>
+  <div id="toast-stack" class="toast-stack"><div id="toast" class="toast" role="status" hidden></div></div>
+  <div id="sr-status" class="sr-only" aria-live="polite"></div>
+</body>
+</html>

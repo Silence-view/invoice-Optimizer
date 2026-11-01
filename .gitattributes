@@ -1,0 +1,25 @@
+# Normalise text files to LF in the repository and working tree.
+* text=auto eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.parquet binary
+*.xlsx binary
+*.woff  binary
+*.woff2 binary
+
+# Templates are pinned by SHA-256 (formats.py); keep exact LF bytes everywhere.
+*.tex.j2 text eol=lf
+src/invoice_optimizer/templates/** text eol=lf
+
+# Frozen evidence: byte-exact, hashed in receipts. No conversion, no diffs.
+output/pdf/** -text -diff
+output/source/*.json -text
+
+# Shell scripts must keep LF to run.
+*.sh text eol=lf

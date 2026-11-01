@@ -1,0 +1,61 @@
+%% Proposed architecture, not an implemented or benchmarked system.
+%% UK company, approximately 200 customers. Largest customer: up to 2 million movements.
+%% Monthly interpretation is assumed. Total volume, peaks and source schemas are unknown.
+%% Baseline: email for every new flag. Grouping/digests require a separate policy decision.
+sequenceDiagram
+    autonumber
+    participant S as Sources A and B
+    participant P as Pipeline workers - Python and SQL
+    participant D as Operational DB - PostgreSQL
+    actor H as Reviewer
+    participant U as Excel or web review interface
+    participant A as Control API - Python
+    participant N as Alert worker - Python
+    participant E as Email provider API
+
+    S->>P: Deliver incremental batch, source cursor and manifest
+    Note over S,P: Source identity, versioning, update semantics and delivery SLA require a data contract.<br/>Continuous assessment is possible only when source changes become available.
+    P->>P: Upload original bytes to immutable object storage, verify checksum
+    P->>D: TX: publish verified object reference, input manifest and intake job
+    Note over P,D: Object upload and SQL commit are separate durable boundaries.<br/>Recover unreferenced objects if publication fails.
+    P->>D: TX per parsed batch: observations or quarantine, READY assessment jobs and checkpoint
+    Note over P,D: Create assessment jobs only after their records exist in the same transaction.<br/>Stable delivery and source-version keys make intake replay-safe.<br/>Quarantined rows remain counted and traceable.
+    P->>D: Claim READY jobs, read observations, existing versions and prior feature context
+    P->>P: Normalize, match, validate and score with versioned rules and frozen model
+    Note over P: Missing counterpart may be WAITING within its expected arrival window.<br/>NOT_SCORED is distinct from low risk.<br/>A low model score never overrides a failed deterministic control.
+    P->>D: TX: canonical versions, assessments, new flags, cases, alert outbox and job completion
+    Note over P,D: Unique flag identity creates one logical alert for each newly raised flag.<br/>Re-executing a job must not create another alert for the same event.<br/>Model evidence, control evidence and human outcomes remain separate.
+
+    N->>D: Claim alert job and reserve an identified send attempt
+    N->>E: Send alert to configured owner with secure case link
+    alt Provider definitely accepts
+        E-->>N: Acceptance and provider message ID
+        N->>D: Persist accepted attempt and provider reference
+    else Provider definitely rejects
+        E-->>N: Definite rejection with error evidence
+        N->>D: Persist failure, retry only under the defined error policy
+    else Timeout or crash leaves submission uncertain
+        N->>D: Persist or recover UNKNOWN attempt, reconcile before replay
+    end
+    Note over N,E: A unique outbox job does not guarantee exactly-once email delivery.<br/>An expired lease does not prove that the provider received nothing.<br/>Provider acceptance does not establish delivery or human reading.
+
+    H->>U: Open assigned case
+    U->>A: Request case context
+    A->>D: Read original and current values, evidence, audit and expected version
+    D-->>A: Versioned case context
+    A-->>U: Show evidence and permitted actions
+    H->>U: Propose correction with reason, or record an explicit review outcome
+    U->>A: Submit authenticated command with request ID and expected version
+    A->>D: TX: authorize, validate, lock affected scope and compare expected version
+    alt Current version and permitted correction
+        A->>D: Append correction and replacement version, enqueue reassessment and aggregate jobs
+        Note over A,D: Commit correction, jobs and audit atomically.<br/>Invalidate affected unissued drafts and approvals under the close/dispatch locks.<br/>An issued invoice is corrected through an authorized accounting adjustment.
+        D-->>A: Commit confirmed
+        A-->>U: Correction accepted, reassessment pending
+        P->>D: Claim affected jobs and repeat the assessment path
+    else Stale version, invalid command or prohibited transition
+        D-->>A: Roll back, return conflict or validation evidence
+        A-->>U: Refresh and compare, or correct the rejected command
+    end
+    Note over H,A: Review outcomes include CONFIRMED_ISSUE, VERIFIED_VALID,<br/>INSUFFICIENT_EVIDENCE and UNRESOLVED.<br/>Excel cells are not authoritative approval or correction records.
+    Note over P,D: Preserve raw input, prior business versions and prior assessments.<br/>Reviewed labels support later offline training and controlled model promotion.<br/>This sequence performs inference, not online retraining.

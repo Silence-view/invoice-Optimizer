@@ -1,0 +1,138 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[margin=18mm,top=22mm,bottom=23mm,headheight=15pt,headsep=8mm]{geometry}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[table]{xcolor}
+\usepackage{array,tabularx,longtable,booktabs,fancyhdr,graphicx}
+\definecolor{ink}{HTML}{182F46}
+\definecolor{muted}{HTML}{5C6B78}
+\definecolor{pale}{HTML}{F0F4F7}
+\definecolor{line}{HTML}{D7E0E6}
+\definecolor{demo}{HTML}{92400E}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.3}
+\setlength{\emergencystretch}{3em}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcommand{\fitnum}[2]{\begingroup\sbox0{#2}\ifdim\wd0>#1\resizebox{#1}{!}{#2}\else#2\fi\endgroup}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}Invoice DEMO-NONVAT-2026-000001}
+
+\fancyhead[R]{\scriptsize\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE}
+
+\fancyfoot[L]{\scriptsize\color{muted}Example Procurement Services Ltd (DEMO)}
+\fancyfoot[R]{\scriptsize\color{muted}Page \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=15
+\begin{document}
+\color{ink}
+\raggedright
+\begin{minipage}[t]{0.57\textwidth}
+\vspace{0pt}
+{\Large\bfseries Example Procurement Services Ltd (DEMO)}\par
+{\small 1 Demonstration Square\newline{}London\newline{}DEMO UK ADDRESS\par
+billing@example.test\par
+Company no. DEMO-NOT-REGISTERED
+
+}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.39\textwidth}\raggedleft
+\vspace{0pt}
+{\Huge\bfseries INVOICE}\par
+{\large DEMO-NONVAT-2026-000001}\par
+{\small\color{muted}Billing period: 2026-09}
+\end{minipage}
+\par\vspace{5mm}
+
+\colorbox{pale}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\centering\small\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE\par\normalfont\footnotesize Test data and demonstration payment details. Do not pay.}}
+\vspace{4mm}
+
+\begin{minipage}[t]{0.53\textwidth}
+\vspace{0pt}
+{\small\bfseries\color{muted}BILL TO}\par
+{\bfseries North \& West Trading Ltd (DEMO)}\par
+{\small 12 Test Street\newline{}Manchester\newline{}DEMO UK ADDRESS\par
+accounts@north-w\hspace{0pt}est.example.test\hspace{0pt}\par
+Customer ID: DEMO-C001
+
+\par VAT no. GB-DEMO-CUSTOMER
+
+}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.42\textwidth}
+\vspace{0pt}
+\small
+\begin{tabularx}{\linewidth}{@{}>{\color{muted}}l >{\raggedleft\arraybackslash}X@{}}
+Invoice date & 01 Oct 2026 \\
+Supply / tax point & 30 Sep 2026 \\
+Payment due & \textbf{31 Oct 2026} \\
+Reference / PO & DEMO-PO-2026-0042 \\
+Currency & GBP (pounds sterling) \\
+\end{tabularx}
+\end{minipage}
+\par\vspace{5mm}
+{\small All unit prices and net amounts exclude VAT.}
+\begingroup
+\fontsize{8}{10}\selectfont
+\arrayrulecolor{line}
+\begin{longtable}{@{}L{62.3mm}R{10mm}R{19mm}R{19mm}R{12mm}R{18mm}R{21mm}@{}}
+\rowcolor{ink}\color{white}\bfseries Description & \color{white}\bfseries Qty & \color{white}\bfseries Unit (GBP) & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Total (GBP) \\
+\endfirsthead
+\multicolumn{7}{@{}l}{\color{muted}Invoice DEMO-NONVAT-2026-000001 -- continued} \\
+\rowcolor{ink}\color{white}\bfseries Description & \color{white}\bfseries Qty & \color{white}\bfseries Unit (GBP) & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Total (GBP) \\
+\endhead
+\multicolumn{7}{r}{\color{muted}Continued on the next page} \\
+\endfoot
+\endlastfoot
+
+
+Procurement administration - September 2026 & \fitnum{10mm}{1200} & \fitnum{19mm}{0.25} & \fitnum{19mm}{300.00} & -- & \fitnum{18mm}{0.00} & \fitnum{21mm}{300.00} \\
+
+\hline
+
+
+Monthly reconciliation and account statement service & \fitnum{10mm}{1} & \fitnum{19mm}{85.00} & \fitnum{19mm}{85.00} & -- & \fitnum{18mm}{0.00} & \fitnum{21mm}{85.00} \\
+
+\hline
+
+\end{longtable}
+\endgroup
+\begin{minipage}{\textwidth}
+
+{\small\color{muted}Supplier is not VAT registered. No VAT has been charged.}
+
+\vspace{3mm}
+\begin{flushright}
+\begin{tabular}{@{}lr@{}}
+Net total & GBP 385.00 \\
+VAT total & GBP 0.00 \\
+\midrule
+{\large\bfseries Amount due} & {\large\bfseries GBP 385.00} \\
+\end{tabular}
+\end{flushright}
+\vspace{3mm}
+{\small\bfseries PAYMENT INFORMATION}\par
+{\small Payment due within 30 days of invoice date. Demonstration only - do not pay.\par
+Cash discount: none offered. Quote \textbf{DEMO-NONVAT-2026-000001} as your payment reference.}
+\vspace{2mm}
+\colorbox{pale}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\small
+\begin{tabularx}{\linewidth}{@{}l X l X@{}}
+Bank & DEMO BANK - DO NOT PAY & Sort code & XX-XX-XX \\
+Account name & Example Procurement (DEMO) & Account no. & XXXXXXXX \\
+\end{tabularx}}}
+
+\par{\footnotesize\color{demo}Demonstration only. The company, VAT and bank identifiers are test placeholders.}
+
+\end{minipage}
+\end{document}

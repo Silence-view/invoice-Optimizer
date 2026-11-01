@@ -1,0 +1,19 @@
+# Example: the frozen legacy layout (uk-classic-v3). This pack accepts only a
+# seller block; colours, fonts and labels belong to profile packs such as
+# uk-modern-v1. Select with INVOICE_FORMAT_PROFILE=classic.
+description = "Legacy classic A4 layout (uk-classic-v3)"
+pack = "uk-classic-v3"
+
+[seller]
+legal_name = "Example Procurement Services Ltd (Synthetic)"
+address = """100 Example Street
+London
+ZZ1 1ZZ
+United Kingdom"""
+email = "billing@example.test"
+company_number = "DEMO ONLY"
+vat_number = "DEMO - NOT A VAT REGISTRATION"
+bank_name = "Demonstration bank - do not pay"
+account_name = "SYNTHETIC DEMO - NO PAYMENT"
+sort_code = "00-00-00"
+account_number = "00000000"

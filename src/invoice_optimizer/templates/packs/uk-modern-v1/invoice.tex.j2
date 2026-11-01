@@ -1,0 +1,325 @@
+<# uk-modern-v1. Profile values reach this file only as validated hex colours,
+   enum-mapped font lines, integers, or text passed through the tex filter. #>
+<% set show_line_vat = vat_enabled and fmt.columns.line_vat %>
+<% set show_total = vat_enabled and fmt.columns.line_total %>
+<% set nmoney = 2 + (1 if show_line_vat else 0) + (1 if show_total else 0) %>
+<% set ncols = 2 + nmoney + (1 if vat_enabled else 0) %>
+\documentclass[10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+<< fmt.font_tex >>
+% Proportional figures in prose, tabular figures wherever amounts align.
+\providecommand{\tabularnums}{}
+\usepackage[<< fmt.paper >>paper,margin=<< fmt.margin >>mm,top=<< fmt.margin + 4 >>mm,bottom=<< fmt.margin + 7 >>mm,headheight=14pt,headsep=5mm,footskip=10mm]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{array,calc,longtable,booktabs,tabularx,fancyhdr,graphicx,lastpage}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\usepackage{microtype}
+\usepackage[hidelinks,pdfcreator={invoice-optimizer uk-modern-v1},pdfproducer={invoice-optimizer},pdftitle={<< fmt.pdf_title >>},pdfauthor={<< fmt.pdf_author >>},pdfsubject={<< fmt.pdf_subject >>}]{hyperref}
+\definecolor{accent}{HTML}{<< fmt.colors.accent >>}
+\definecolor{ink}{HTML}{<< fmt.colors.ink >>}
+\definecolor{muted}{HTML}{<< fmt.colors.muted >>}
+\colorlet{pale}{accent!6!white}
+\colorlet{zebra}{accent!5!white}
+\colorlet{rule}{muted!35!white}
+\definecolor{demo}{HTML}{92400E}
+\definecolor{demobg}{HTML}{FEF3E2}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.35}
+\setlength{\emergencystretch}{3em}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\setlength{\LTpre}{2mm}
+\setlength{\LTpost}{0pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcommand{\fitnum}[2]{\begingroup\sbox0{#2}\ifdim\wd0>#1\resizebox{#1}{!}{#2}\else#2\fi\endgroup}
+\newcommand{\sectionlabel}[1]{{\footnotesize\bfseries\color{accent}#1}\par\vspace{1.2mm}}
+\newcommand{\colhead}[1]{\leavevmode{\color{muted}\bfseries #1}}
+\newlength{\moneyw}\setlength{\moneyw}{0.095\textwidth}
+\newlength{\qtyw}\setlength{\qtyw}{0.06\textwidth}
+\newlength{\ratew}\setlength{\ratew}{0.075\textwidth}
+\newlength{\descw}
+\setlength{\descw}{\dimexpr\textwidth-<< nmoney >>\moneyw-\qtyw<% if vat_enabled %>-\ratew<% endif %>-<< 2 * ncols >>\tabcolsep\relax}
+\tcbset{card/.style={enhanced,colback=pale,frame hidden,arc=0pt,boxrule=0pt,borderline north={1.2pt}{0pt}{accent},left=4mm,right=4mm,top=3mm,bottom=3mm,before skip=0pt,after skip=0pt}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{muted}<< fmt.labels.invoice_number | tex >> \textbf{<< document.invoice_number | tex >>}}
+<% if document.synthetic %>
+\fancyhead[R]{\scriptsize\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE}
+<% else %>
+\fancyhead[R]{\footnotesize\color{muted}<< fmt.labels.period | tex >> << document.period | tex >>}
+<% endif %>
+\fancyfoot[L]{\parbox[b]{0.86\textwidth}{\raggedright\scriptsize\color{muted}<% if fmt.footer_text %><< fmt.footer_text | tex >><% else %><< document.seller.legal_name | tex >>\enspace\textperiodcentered\enspace Company no. << document.seller.company_number | tex >><% if vat_enabled %>\enspace\textperiodcentered\enspace VAT no. << document.seller.vat_number | tex >><% endif %><% endif %>}}
+\fancyfoot[R]{\scriptsize\color{muted}Page \thepage\ of \pageref*{LastPage}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\renewcommand{\footrule}{{\color{rule}\vbox to 0pt{\hbox to\headwidth{\leaders\hrule height\footrulewidth\hfill}\vss}}\vspace{2mm}}
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=15
+\begin{document}
+\color{ink}
+\raggedright
+\begin{minipage}[t]{0.55\textwidth}
+\vspace{0pt}
+\raggedright
+<% if fmt.logo %>
+\includegraphics[height=12mm,width=0.8\linewidth,keepaspectratio]{<< fmt.logo >>}\par\vspace{3mm}
+<% endif %>
+{\Large\bfseries << document.seller.legal_name | tex >>}\par\vspace{2mm}
+{\small\color{muted}\setlength{\baselineskip}{12pt}<< document.seller.address | tex >>\par
+<< document.seller.email | tex >>\par
+Company no. << document.seller.company_number | tex >>
+<% if vat_enabled %>
+\par VAT no. << document.seller.vat_number | tex >>
+<% endif %>
+\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.4\textwidth}
+\vspace{0pt}
+\begin{tcolorbox}[enhanced,colback=accent,frame hidden,arc=0pt,boxrule=0pt,left=5mm,right=5mm,top=4.5mm,bottom=4.5mm,halign=right]
+\color{white}
+{\LARGE\bfseries <% if vat_enabled %>VAT <% endif %>INVOICE}\par\vspace{3mm}
+{\footnotesize << fmt.labels.invoice_number | tex >>}\par
+{\large\bfseries << document.invoice_number | tex >>}\par\vspace{1.5mm}
+{\footnotesize << fmt.labels.invoice_date | tex >>\enspace\textbf{<< invoice_date | tex >>}}
+\end{tcolorbox}
+\end{minipage}
+\par\vspace{6mm}
+<% if document.synthetic %>
+\begin{tcolorbox}[enhanced,colback=demobg,frame hidden,arc=0pt,boxrule=0pt,borderline west={2pt}{0pt}{demo},left=4mm,right=4mm,top=2mm,bottom=2mm,before skip=0pt,after skip=0pt]
+{\small\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE}\enspace{\footnotesize\color{demo}Test data and demonstration payment details. Do not pay.}
+\end{tcolorbox}
+\vspace{4mm}
+<% endif %>
+\begin{tcolorbox}[card,equal height group=parties,width=0.485\textwidth,nobeforeafter,box align=top]
+\sectionlabel{\MakeUppercase{<< fmt.labels.bill_to | tex >>}}
+{\bfseries << document.customer.legal_name | tex >>}\par\vspace{1mm}
+{\small\setlength{\baselineskip}{12pt}<< document.customer.address | tex >>\par
+<< document.customer.email | tex >>\par\vspace{1mm}
+{\color{muted}<< fmt.labels.customer_id | tex >>}\enspace << document.customer.id | tex >>
+<% if document.customer.vat_number %>
+\par{\color{muted}VAT no.}\enspace << document.customer.vat_number | tex >>
+<% endif %>
+\par}
+\end{tcolorbox}\hfill
+\begin{tcolorbox}[card,equal height group=parties,width=0.485\textwidth,nobeforeafter,box align=top]
+\sectionlabel{\MakeUppercase{<< fmt.labels.invoice_details | tex >>}}
+\small
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash\leavevmode\color{muted}}p{0.42\linewidth} >{\raggedleft\arraybackslash}X@{}}
+<< fmt.labels.invoice_date | tex >> & << invoice_date | tex >> \\
+<< fmt.labels.tax_point | tex >> & << tax_point | tex >> \\
+<< fmt.labels.due_date | tex >> & \textbf{<< due_date | tex >>} \\
+<< fmt.labels.reference | tex >> & << document.reference | tex >> \\
+<< fmt.labels.period | tex >> & << document.period | tex >> \\
+<< fmt.labels.currency | tex >> & GBP (pounds sterling) \\
+\end{tabularx}
+\end{tcolorbox}
+\par\vspace{5mm}
+<% if line_format == "ITEMIZED" %>
+{\small\bfseries Itemised movement detail: << movement_count >> movement<% if movement_count != 1 %>s<% endif %>, listed on the following pages.}\par\vspace{1mm}
+<% endif %>
+{\footnotesize\color{muted}<% if vat_enabled %>Amounts in GBP. Unit prices and net amounts exclude VAT.<% else %>All amounts are in GBP. No VAT is charged.<% endif %>}\par
+\begingroup
+\fontsize{8.5}{10.5}\selectfont\tabularnums
+\arrayrulecolor{rule}
+\begin{longtable}{L{\descw}R{\qtyw}R{\moneyw}R{\moneyw}<% if vat_enabled %>R{\ratew}<% endif %><% if show_line_vat %>R{\moneyw}<% endif %><% if show_total %>R{\moneyw}<% endif %>}
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{<< fmt.labels.description | tex >>} & \colhead{<< fmt.labels.quantity | tex >>} & \colhead{<< fmt.labels.unit_price | tex >>} & \colhead{<< fmt.labels.net | tex >>}<% if vat_enabled %> & \colhead{<< fmt.labels.vat_rate | tex >>}<% endif %><% if show_line_vat %> & \colhead{<< fmt.labels.vat | tex >>}<% endif %><% if show_total %> & \colhead{<< fmt.labels.total | tex >>}<% endif %> \\
+\midrule
+\endfirsthead
+\multicolumn{<< ncols >>}{l}{\color{muted}<< fmt.labels.invoice_number | tex >> << document.invoice_number | tex >> -- continued} \\
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{<< fmt.labels.description | tex >>} & \colhead{<< fmt.labels.quantity | tex >>} & \colhead{<< fmt.labels.unit_price | tex >>} & \colhead{<< fmt.labels.net | tex >>}<% if vat_enabled %> & \colhead{<< fmt.labels.vat_rate | tex >>}<% endif %><% if show_line_vat %> & \colhead{<< fmt.labels.vat | tex >>}<% endif %><% if show_total %> & \colhead{<< fmt.labels.total | tex >>}<% endif %> \\
+\midrule
+\endhead
+\midrule
+\multicolumn{<< ncols >>}{r}{\color{muted}Continued on the next page} \\
+\endfoot
+\bottomrule
+\endlastfoot
+<% set band = namespace(on=false) %>
+<% for row in rows %>
+<% if not row.continuation %><% set band.on = not band.on %><% endif %>
+<% if not band.on %>\rowcolor{zebra}<% endif %>
+<% if row.continuation %>
+{\color{muted}(continued) }<< row.description | tex >><% for _ in range(ncols - 1) %> &<% endfor %> \\
+<% else %>
+<< row.description | tex >> & \fitnum{\qtyw}{<< row.quantity | tex >>} & \fitnum{\moneyw}{<< row.unit_price | tex >>} & \fitnum{\moneyw}{<< row.net | tex >>}<% if vat_enabled %> & \fitnum{\ratew}{<< row.rate | tex >>\%}<% endif %><% if show_line_vat %> & \fitnum{\moneyw}{<< row.vat | tex >>}<% endif %><% if show_total %> & \fitnum{\moneyw}{<< row.gross | tex >>}<% endif %> \\
+<% endif %>
+<% endfor %>
+\end{longtable}
+\endgroup
+\vspace{5mm}
+\begin{minipage}{\textwidth}
+\begin{minipage}[t]{0.52\textwidth}
+\vspace{0pt}
+\raggedright
+<% if vat_enabled and fmt.show_vat_summary %>
+\sectionlabel{\MakeUppercase{<< fmt.labels.vat_summary | tex >>}}
+{\footnotesize\tabularnums
+\begin{tabularx}{\linewidth}{@{}l>{\raggedleft\arraybackslash}X>{\raggedleft\arraybackslash}X>{\raggedleft\arraybackslash}X@{}}
+\colhead{<< fmt.labels.vat_rate | tex >>} & \colhead{<< fmt.labels.net | tex >>} & \colhead{<< fmt.labels.vat | tex >>} & \colhead{<< fmt.labels.total | tex >>} \\
+\midrule
+<% for group in vat_groups %>
+<< group.rate | tex >>\% & << group.net | tex >> & << group.vat | tex >> & << group.gross | tex >> \\
+<% endfor %>
+\bottomrule
+\end{tabularx}\par}
+\vspace{4mm}
+<% elif not vat_enabled %>
+{\footnotesize\color{muted}Supplier is not VAT registered. No VAT has been charged.}\par\vspace{4mm}
+<% endif %>
+\sectionlabel{\MakeUppercase{<< fmt.labels.terms | tex >>}}
+{\footnotesize\setlength{\baselineskip}{11pt}\hyphenpenalty=10000
+<< document.payment_terms | tex >>\par\vspace{1mm}
+Cash discount: none offered. Please quote the payment reference with every payment.
+<% if fmt.extra_note %>
+\par\vspace{1mm}<< fmt.extra_note | tex >>
+<% endif %>
+\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.42\textwidth}
+\vspace{0pt}
+\small
+\tabularnums
+\begin{tabular*}{\linewidth}{@{\hspace{4mm}}l@{\extracolsep{\fill}}r@{\hspace{4mm}}}
+<< fmt.labels.subtotal | tex >> & GBP << totals.net | tex >> \\
+<% if vat_enabled %>
+<% if vat_groups | length == 1 %><< fmt.labels.vat | tex >> at << vat_groups[0].rate | tex >>\%<% else %><< fmt.labels.vat_total | tex >><% endif %> & GBP << totals.vat | tex >> \\
+<% endif %>
+\end{tabular*}\par\vspace{2mm}
+\begin{tcolorbox}[enhanced,colback=accent,frame hidden,arc=0pt,boxrule=0pt,left=4mm,right=4mm,top=3mm,bottom=3mm,before skip=0pt,after skip=0pt]
+\color{white}
+{\small\bfseries << fmt.labels.amount_due | tex >>}\hfill{\Large\bfseries\tabularnums GBP << totals.gross | tex >>}\par\vspace{0.5mm}
+{\footnotesize << fmt.labels.due_date | tex >> << due_date | tex >>}
+\end{tcolorbox}
+\end{minipage}
+\end{minipage}
+\par\vfill\vspace{4mm}
+\begin{minipage}{\textwidth}
+\begin{tcolorbox}[card]
+\sectionlabel{\MakeUppercase{<< fmt.labels.payment | tex >>}}
+\footnotesize
+\begin{minipage}[t]{0.5\linewidth}
+\vspace{0pt}
+\begin{tabularx}{\linewidth}{@{}>{\leavevmode\color{muted}}l X@{}}
+<< fmt.labels.bank | tex >> & << document.seller.bank_name | tex >> \\
+<< fmt.labels.account_name | tex >> & << document.seller.account_name | tex >> \\
+<< fmt.labels.sort_code | tex >> & << document.seller.sort_code | tex >> \\
+\end{tabularx}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.46\linewidth}
+\vspace{0pt}
+\begin{tabularx}{\linewidth}{@{}>{\leavevmode\color{muted}}l X@{}}
+<< fmt.labels.account_number | tex >> & << document.seller.account_number | tex >> \\
+<% if fmt.show_iban and document.seller.iban %>
+<< fmt.labels.iban | tex >> & << document.seller.iban | tex >> \\
+<% endif %>
+<% if fmt.show_iban and document.seller.bic %>
+<< fmt.labels.bic | tex >> & << document.seller.bic | tex >> \\
+<% endif %>
+<< fmt.labels.payment_reference | tex >> & \textbf{<< document.invoice_number | tex >>} \\
+\end{tabularx}
+\end{minipage}
+\end{tcolorbox}
+<% if document.synthetic %>
+\par\vspace{2mm}{\scriptsize\color{demo}Demonstration only. The company, VAT and bank identifiers are test placeholders.}
+<% endif %>
+\end{minipage}
+<% if line_format == "ITEMIZED" %>
+\clearpage
+{\Large\bfseries Itemised movement detail}\par\vspace{1mm}
+{\small\color{muted}<< fmt.labels.invoice_number | tex >> << document.invoice_number | tex >>\enspace\textperiodcentered\enspace << fmt.labels.period | tex >> << document.period | tex >>}\par\vspace{3mm}
+\begingroup
+\fontsize{8}{10}\selectfont\tabularnums
+\arrayrulecolor{rule}
+<% if movement_vat_enabled %>
+<% if vat_enabled %>
+{\small All << movement_count >> included movements are listed below. Movement VAT is a breakdown of the same monthly charge, using the invoice's declared << movement_vat_rate | tex >>\% rate. Invoice totals are unchanged; this does not assign a tax classification to the underlying purchases.}\par\vspace{1mm}
+{\footnotesize\color{muted}Each movement's VAT is rounded to the nearest penny; half pennies round up. Any difference from invoice VAT is shown explicitly below. Dates and times are UTC. Continued text carries no repeated amounts. Amounts in GBP.}\par
+<% else %>
+{\small All included movements are listed below. No VAT is charged because the supplier is not VAT registered. This detail is a breakdown of the same monthly charge; invoice totals are unchanged.}\par\vspace{1mm}
+{\footnotesize\color{muted}Dates and times are UTC. Continued text carries no repeated amounts. Amounts in GBP.}\par
+<% endif %>
+\newlength{\nov}\setlength{\nov}{0.05\textwidth}
+\newlength{\refw}\setlength{\refw}{0.22\textwidth}
+\newlength{\mdescw}\setlength{\mdescw}{\dimexpr\textwidth-\nov-\refw-3\moneyw-\ratew-14\tabcolsep\relax}
+\begin{longtable}{R{\nov}L{\refw}L{\mdescw}R{\moneyw}R{\ratew}R{\moneyw}R{\moneyw}}
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{No.} & \colhead{Movement / UTC date / supplier} & \colhead{<< fmt.labels.description | tex >>} & \colhead{<< fmt.labels.net | tex >>} & \colhead{<< fmt.labels.vat_rate | tex >>} & \colhead{<< fmt.labels.vat | tex >>} & \colhead{Gross} \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{\color{muted}<< fmt.labels.invoice_number | tex >> << document.invoice_number | tex >> -- itemised movements continued} \\
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{No.} & \colhead{Movement / UTC date / supplier} & \colhead{<< fmt.labels.description | tex >>} & \colhead{<< fmt.labels.net | tex >>} & \colhead{<< fmt.labels.vat_rate | tex >>} & \colhead{<< fmt.labels.vat | tex >>} & \colhead{Gross} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{7}{r}{\color{muted}Movement detail continues on the next page} \\
+\endfoot
+\bottomrule
+\endlastfoot
+<% for row in movement_rows %>
+<% if row.row_no is even %>\rowcolor{zebra}<% endif %>
+<% if row.continuation %>
+ & <% if row.external_id %>Ref: << row.external_id | texdetail >><% endif %><% if row.external_id and row.supplier_id %>\newline <% endif %><% if row.supplier_id %>Supplier: << row.supplier_id | texdetail >><% endif %> & {\color{muted}(continued) }<< row.description | texdetail >> & & & & \\
+<% else %>
+\fitnum{\nov}{<< row.row_no >>} & << row.event_date | texdetail >> << row.event_time | texdetail >>\newline Ref: << row.external_id | texdetail >>\newline Supplier: << row.supplier_id | texdetail >> & << row.description | texdetail >> & \fitnum{\moneyw}{<< row.amount | tex >>} & << row.vat_rate | tex >>\% & \fitnum{\moneyw}{<< row.vat_amount | tex >>} & \fitnum{\moneyw}{<< row.gross_amount | tex >>} \\
+<% endif %>
+<% endfor %>
+\end{longtable}
+\vspace{3mm}
+\begin{minipage}{\textwidth}
+\begin{tabular}{L{\dimexpr\nov+\refw+\mdescw+4\tabcolsep\relax}R{\moneyw}R{\ratew}R{\moneyw}R{\moneyw}}
+\leavevmode{\footnotesize\bfseries\color{accent}DETAIL RECONCILIATION} & \colhead{<< fmt.labels.net | tex >>} & & \colhead{<< fmt.labels.vat | tex >>} & \colhead{Gross} \\
+\rowcolor{pale}Movement subtotal & \fitnum{\moneyw}{<< movement_vat_subtotals.net | tex >>} & & \fitnum{\moneyw}{<< movement_vat_subtotals.vat | tex >>} & \fitnum{\moneyw}{<< movement_vat_subtotals.gross | tex >>} \\
+<% if movement_vat_has_adjustment %>
+\rowcolor{pale}Invoice VAT rounding adjustment & 0.00 & & \fitnum{\moneyw}{<< movement_vat_adjustment | tex >>} & \fitnum{\moneyw}{<< movement_vat_adjustment | tex >>} \\
+<% endif %>
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}
+\rowcolor{pale}\bfseries Reconciled invoice totals & \bfseries\fitnum{\moneyw}{<< totals.net | tex >>} & & \bfseries\fitnum{\moneyw}{<< totals.vat | tex >>} & \bfseries\fitnum{\moneyw}{<< totals.gross | tex >>} \\
+\end{tabular}
+\par\vspace{2mm}{\footnotesize\color{muted}These reconciled amounts match the invoice summary. The rounding adjustment, when present, changes VAT and gross only; movement net amounts are unchanged.}
+\end{minipage}
+<% else %>
+{\small All << movement_count >> included movements are listed below. Net amounts exclude VAT; the aggregate VAT and amount due remain in the invoice summary. Dates and times are shown in UTC.}\par\vspace{1mm}
+{\footnotesize\color{muted}Long descriptions or identifiers continue on subsequent rows. Each movement amount appears once. Amounts in GBP.}\par
+\newlength{\nov}\setlength{\nov}{0.05\textwidth}
+\newlength{\datew}\setlength{\datew}{0.13\textwidth}
+\newlength{\refw}\setlength{\refw}{0.18\textwidth}
+\newlength{\supw}\setlength{\supw}{0.13\textwidth}
+\newlength{\mdescw}\setlength{\mdescw}{\dimexpr\textwidth-\nov-\datew-\refw-\supw-\moneyw-12\tabcolsep\relax}
+\begin{longtable}{R{\nov}L{\datew}L{\refw}L{\mdescw}L{\supw}R{\moneyw}}
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{No.} & \colhead{Date / time (UTC)} & \colhead{Movement reference} & \colhead{<< fmt.labels.description | tex >>} & \colhead{Supplier} & \colhead{<< fmt.labels.net | tex >>} \\
+\midrule
+\endfirsthead
+\multicolumn{6}{l}{\color{muted}<< fmt.labels.invoice_number | tex >> << document.invoice_number | tex >> -- itemised movements continued} \\
+\arrayrulecolor{accent}\specialrule{0.8pt}{0pt}{0pt}\arrayrulecolor{rule}
+\colhead{No.} & \colhead{Date / time (UTC)} & \colhead{Movement reference} & \colhead{<< fmt.labels.description | tex >>} & \colhead{Supplier} & \colhead{<< fmt.labels.net | tex >>} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{\color{muted}Movement detail continues on the next page} \\
+\endfoot
+\bottomrule
+\endlastfoot
+<% for row in movement_rows %>
+<% if row.row_no is even %>\rowcolor{zebra}<% endif %>
+<% if row.continuation %>
+ & & << row.external_id | texdetail >> & {\color{muted}(continued) }<< row.description | texdetail >> & << row.supplier_id | texdetail >> & \\
+<% else %>
+\fitnum{\nov}{<< row.row_no >>} & << row.event_date | texdetail >>\newline << row.event_time | texdetail >> & << row.external_id | texdetail >> & << row.description | texdetail >> & << row.supplier_id | texdetail >> & \fitnum{\moneyw}{<< row.amount | tex >>} \\
+<% endif %>
+<% endfor %>
+\end{longtable}
+<% endif %>
+\endgroup
+<% endif %>
+\end{document}

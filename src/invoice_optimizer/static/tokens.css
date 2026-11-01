@@ -1,0 +1,724 @@
+/*
+ * Invoice Operations design tokens.
+ *
+ * One source of truth: every colour is derived from the OKLCH primitives in
+ * this file. Themes and accent presets only change lightness/chroma/hue
+ * numbers; the semantic tokens below are written once.
+ *
+ * Attributes on <html> (set by theme.js, display preferences only):
+ *   data-theme    light | dark            (absent = follow the OS)
+ *   data-accent   indigo | blue | teal | emerald | amber | rose
+ *   data-surface  glass | solid
+ *   data-density  comfortable | compact
+ *   data-motion   full | reduced          (absent = follow the OS)
+ *   data-sidebar  expanded | collapsed
+ *
+ * Contrast for every pair is computed by qa/contrast.cjs in the scratchpad.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Theme-independent primitives                                     */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* Neutral hue: a faint cool grey so neutrals sit with every accent. */
+  --n-h: 258;
+  --n-c: 0.006;
+  --n-c-strong: 0.016;
+
+  /* Accent preset: indigo (default). Light and dark steps per preset. */
+  --accent-h: 274;
+  --accent-c-light: 0.19;
+  --accent-l-light: 0.49;
+  --accent-c-dark: 0.12;
+  --accent-l-dark: 0.78;
+
+  /* Status hues */
+  --success-h: 150;
+  --warning-h: 62;
+  --danger-h: 27;
+  --info-h: 252;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --lh-xs: 16px;
+  --text-sm: 13px;
+  --lh-sm: 18px;
+  --text-md: 14px;
+  --lh-md: 20px;
+  --text-lg: 16px;
+  --lh-lg: 24px;
+  --text-xl: 20px;
+  --lh-xl: 28px;
+  --text-2xl: 28px;
+  --lh-2xl: 34px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing, 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --dur-1: 80ms;
+  --dur-2: 140ms;
+  --dur-3: 220ms;
+  --dur-4: 320ms;
+  --dur-5: 480ms;
+  --dur-fade: 80ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease: var(--ease-out);
+  --motion-distance: 8px;
+  --motion-scale-from: .96;
+  --press-scale: .98;
+  --lift: -1px;
+  --stagger-step: 20ms;
+  --mesh-duration: 60s;
+  --shimmer-duration: 1.2s;
+
+  /* Layout */
+  --sidebar-w-expanded: 232px;
+  --sidebar-w-rail: 64px;
+  --sidebar-w: var(--sidebar-w-expanded);
+  --topbar-h: 56px;
+  --main-max: 1440px;
+  --toast-w: 360px;
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-topbar: 20;
+  --z-sidebar: 30;
+  --z-scrim: 29;
+  --z-toast: 60;
+  --z-skip: 100;
+
+  /* Density: comfortable (default) */
+  --row-h: 40px;
+  --cell-px: 12px;
+  --cell-py: 10px;
+  --control-h: 32px;
+  --control-h-sm: 28px;
+  --body-size: var(--text-md);
+  --body-lh: var(--lh-md);
+  --panel-pad: 20px;
+  --gap-section: 24px;
+  --target-min: 24px;
+
+  /* Glass recipe */
+  --glass-blur: 20px;
+  --glass-saturate: 160%;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Accent presets. Each step clears 4.5:1 against accent-contrast    */
+/*    in both themes (see qa/contrast.cjs output).                     */
+/* ------------------------------------------------------------------ */
+
+:root[data-accent="blue"] {
+  --accent-h: 252;
+  --accent-c-light: 0.16;
+  --accent-l-light: 0.5;
+  --accent-c-dark: 0.12;
+  --accent-l-dark: 0.78;
+}
+
+:root[data-accent="teal"] {
+  --accent-h: 200;
+  --accent-c-light: 0.1;
+  --accent-l-light: 0.5;
+  --accent-c-dark: 0.11;
+  --accent-l-dark: 0.8;
+}
+
+:root[data-accent="emerald"] {
+  --accent-h: 160;
+  --accent-c-light: 0.12;
+  --accent-l-light: 0.49;
+  --accent-c-dark: 0.14;
+  --accent-l-dark: 0.8;
+}
+
+:root[data-accent="amber"] {
+  --accent-h: 58;
+  --accent-c-light: 0.13;
+  --accent-l-light: 0.5;
+  --accent-c-dark: 0.13;
+  --accent-l-dark: 0.82;
+}
+
+:root[data-accent="rose"] {
+  --accent-h: 8;
+  --accent-c-light: 0.19;
+  --accent-l-light: 0.5;
+  --accent-c-dark: 0.13;
+  --accent-l-dark: 0.78;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Theme lightness steps                                            */
+/* ------------------------------------------------------------------ */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --l-canvas: 0.972;
+  --l-surface: 1;
+  --l-raised: 1;
+  --l-sunken: 0.955;
+  --l-elev-3: 1;
+  --l-elev-4: 1;
+  --l-border: 0.915;
+  --l-border-strong: 0.6;
+  --l-text: 0.21;
+  --l-text-muted: 0.47;
+  --accent-l: var(--accent-l-light);
+  --accent-c: var(--accent-c-light);
+  --accent-contrast: oklch(1 0 0);
+  --hover-mix: black;
+  --hover-amount: 16%;
+  --l-status-fg: 0.47;
+  --c-status-fg: 0.13;
+  --l-status-bg: 0.962;
+  --c-status-bg: 0.03;
+  --l-status-border: 0.84;
+  --c-status-border: 0.08;
+  --shadow-rgb: 16 24 40;
+  --shadow-a1: .06;
+  --shadow-a2: .08;
+  --shadow-a3: .18;
+  --highlight-a: .55;
+  --mesh-a: 14%;
+  --mesh-neutral-a: 40%;
+
+  /* Chart steps (dataviz reference palette, validated for this surface) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --seq-1: #86b6ef;
+  --seq-2: #5598e7;
+  --seq-3: #256abf;
+  --seq-4: #184f95;
+  --seq-5: #0d366b;
+  --diverge-down: #256abf;
+  --diverge-up: #d03b3b;
+  --diverge-mid: #f0efec;
+  --chart-neutral: #6b7a90;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --l-canvas: 0.165;
+  --l-surface: 0.205;
+  --l-raised: 0.235;
+  --l-sunken: 0.185;
+  --l-elev-3: 0.26;
+  --l-elev-4: 0.285;
+  --l-border: 0.3;
+  --l-border-strong: 0.58;
+  --l-text: 0.935;
+  --l-text-muted: 0.75;
+  --accent-l: var(--accent-l-dark);
+  --accent-c: var(--accent-c-dark);
+  --accent-contrast: oklch(0.2 0.05 var(--accent-h));
+  --hover-mix: white;
+  --hover-amount: 22%;
+  --l-status-fg: 0.8;
+  --c-status-fg: 0.12;
+  --l-status-bg: 0.26;
+  --c-status-bg: 0.04;
+  --l-status-border: 0.45;
+  --c-status-border: 0.08;
+  --shadow-rgb: 0 0 0;
+  --shadow-a1: .4;
+  --shadow-a2: .5;
+  --shadow-a3: .6;
+  --highlight-a: .07;
+  --mesh-a: 12%;
+  --mesh-neutral-a: 18%;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --seq-1: #184f95;
+  --seq-2: #256abf;
+  --seq-3: #3987e5;
+  --seq-4: #6da7ec;
+  --seq-5: #9ec5f4;
+  --diverge-down: #3987e5;
+  --diverge-up: #e66767;
+  --diverge-mid: #383835;
+  --chart-neutral: #8a96a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --l-canvas: 0.165;
+    --l-surface: 0.205;
+    --l-raised: 0.235;
+    --l-sunken: 0.185;
+    --l-elev-3: 0.26;
+    --l-elev-4: 0.285;
+    --l-border: 0.3;
+    --l-border-strong: 0.58;
+    --l-text: 0.935;
+    --l-text-muted: 0.75;
+    --accent-l: var(--accent-l-dark);
+    --accent-c: var(--accent-c-dark);
+    --accent-contrast: oklch(0.2 0.05 var(--accent-h));
+    --hover-mix: white;
+    --hover-amount: 22%;
+    --l-status-fg: 0.8;
+    --c-status-fg: 0.12;
+    --l-status-bg: 0.26;
+    --c-status-bg: 0.04;
+    --l-status-border: 0.45;
+    --c-status-border: 0.08;
+    --shadow-rgb: 0 0 0;
+    --shadow-a1: .4;
+    --shadow-a2: .5;
+    --shadow-a3: .6;
+    --highlight-a: .07;
+    --mesh-a: 12%;
+    --mesh-neutral-a: 18%;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --seq-1: #184f95;
+    --seq-2: #256abf;
+    --seq-3: #3987e5;
+    --seq-4: #6da7ec;
+    --seq-5: #9ec5f4;
+    --diverge-down: #3987e5;
+    --diverge-up: #e66767;
+    --diverge-mid: #383835;
+    --chart-neutral: #8a96a8;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Semantic tokens (written once, derived from the steps above)     */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* Surfaces and elevation 0-4 */
+  --canvas: oklch(var(--l-canvas) var(--n-c) var(--n-h));
+  --surface: oklch(var(--l-surface) var(--n-c) var(--n-h));
+  --surface-raised: oklch(var(--l-raised) var(--n-c) var(--n-h));
+  --surface-sunken: oklch(var(--l-sunken) var(--n-c) var(--n-h));
+  --elev-0: var(--canvas);
+  --elev-1: var(--surface);
+  --elev-2: var(--surface-raised);
+  --elev-3: oklch(var(--l-elev-3) var(--n-c) var(--n-h));
+  --elev-4: oklch(var(--l-elev-4) var(--n-c) var(--n-h));
+
+  /* Lines and text */
+  --border: oklch(var(--l-border) var(--n-c) var(--n-h));
+  --border-strong: oklch(var(--l-border-strong) var(--n-c-strong) var(--n-h));
+  --text: oklch(var(--l-text) var(--n-c-strong) var(--n-h));
+  --text-muted: oklch(var(--l-text-muted) var(--n-c-strong) var(--n-h));
+
+  /* Accent family */
+  --accent: oklch(var(--accent-l) var(--accent-c) var(--accent-h));
+  --accent-hover: color-mix(in oklch, var(--accent), var(--hover-mix) var(--hover-amount));
+  --accent-tint: color-mix(in oklch, var(--accent) 8%, var(--surface));
+  --accent-border: color-mix(in oklch, var(--accent) 32%, var(--surface));
+  --surface-hover: color-mix(in oklch, var(--accent) 5%, var(--surface));
+  --surface-selected: color-mix(in oklch, var(--accent) 11%, var(--surface));
+  --focus: var(--accent);
+  --link: var(--accent);
+
+  /* Status: exactly three steps each (fg, bg, border) */
+  --success: oklch(var(--l-status-fg) var(--c-status-fg) var(--success-h));
+  --success-bg: oklch(var(--l-status-bg) var(--c-status-bg) var(--success-h));
+  --success-border: oklch(var(--l-status-border) var(--c-status-border) var(--success-h));
+  --warning: oklch(var(--l-status-fg) var(--c-status-fg) var(--warning-h));
+  --warning-bg: oklch(var(--l-status-bg) var(--c-status-bg) var(--warning-h));
+  --warning-border: oklch(var(--l-status-border) var(--c-status-border) var(--warning-h));
+  --danger: oklch(var(--l-status-fg) calc(var(--c-status-fg) + .04) var(--danger-h));
+  --danger-bg: oklch(var(--l-status-bg) var(--c-status-bg) var(--danger-h));
+  --danger-border: oklch(var(--l-status-border) var(--c-status-border) var(--danger-h));
+  --info: oklch(var(--l-status-fg) var(--c-status-fg) var(--info-h));
+  --info-bg: oklch(var(--l-status-bg) var(--c-status-bg) var(--info-h));
+  --info-border: oklch(var(--l-status-border) var(--c-status-border) var(--info-h));
+  --neutral: var(--text-muted);
+  --neutral-bg: var(--surface-sunken);
+  --neutral-border: var(--border);
+
+  /* Charts */
+  --chart-1: var(--accent);
+  --chart-2: var(--chart-neutral);
+  --chart-grid: var(--border);
+  --chart-axis: var(--text-muted);
+
+  /* Shadows. Dark mode: lighter surfaces plus a top highlight carry depth. */
+  --highlight: inset 0 1px 0 rgb(255 255 255 / var(--highlight-a));
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgb(var(--shadow-rgb) / var(--shadow-a1));
+  --shadow-2: 0 4px 12px rgb(var(--shadow-rgb) / var(--shadow-a2)), 0 1px 3px rgb(var(--shadow-rgb) / var(--shadow-a1));
+  --shadow-3: 0 16px 48px rgb(var(--shadow-rgb) / var(--shadow-a3)), 0 2px 6px rgb(var(--shadow-rgb) / var(--shadow-a1));
+  --shadow-4: 0 24px 64px rgb(var(--shadow-rgb) / var(--shadow-a3)), 0 4px 12px rgb(var(--shadow-rgb) / var(--shadow-a2));
+  --backdrop: rgb(13 15 18 / .5);
+
+  /* Paper preview is a document: always opaque white with dark ink. */
+  --paper-bg: #ffffff;
+  --paper-ink: #15191e;
+  --paper-muted: #535c68;
+  --paper-line: #e6e9ee;
+  --paper-mark: #15191e;
+
+  /* Glass tints. Chrome layers carry text over scrolling content, so they
+     stay dense; tables/forms stay effectively opaque (>= .86). */
+  --glass-chrome: color-mix(in srgb, var(--surface) 84%, transparent);
+  --glass-card: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-dialog: color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  --glass-opaque: color-mix(in srgb, var(--surface) 94%, transparent);
+  --glass-border: color-mix(in srgb, var(--border) 70%, transparent);
+
+  /* Ambient canvas mesh (glass mode only) */
+  --mesh-1: color-mix(in oklch, var(--accent) var(--mesh-a), transparent);
+  --mesh-2: color-mix(in oklch, oklch(0.7 0.08 calc(var(--accent-h) + 60)) var(--mesh-a), transparent);
+  --mesh-3: color-mix(in oklch, var(--surface) var(--mesh-neutral-a), transparent);
+
+  /* ------------------------------------------------------------------ */
+  /* Legacy aliases: the pre-redesign names keep resolving.             */
+  /* ------------------------------------------------------------------ */
+  --paper: var(--surface);
+  --ink: var(--text);
+  --muted: var(--text-muted);
+  --line: var(--border);
+  --surface-soft: var(--surface-sunken);
+  --navy: var(--text);
+  --teal: var(--accent);
+  --teal-light: var(--info-bg);
+  --orange: var(--warning);
+  --orange-light: var(--warning-bg);
+  --red: var(--danger);
+  --red-light: var(--danger-bg);
+  --radius: var(--radius-lg);
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Density                                                          */
+/* ------------------------------------------------------------------ */
+
+:root[data-density="compact"] {
+  --row-h: 32px;
+  --cell-px: 8px;
+  --cell-py: 6px;
+  --control-h: 28px;
+  --control-h-sm: 24px;
+  --body-size: var(--text-sm);
+  --body-lh: var(--lh-sm);
+  --panel-pad: 12px;
+  --gap-section: 16px;
+}
+
+@media (max-width: 639.98px) {
+  :root {
+    --target-min: 40px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Motion preference: user override first, then the OS setting.     */
+/*    Transform motion stops; opacity cross-fades of <= 80ms remain.   */
+/* ------------------------------------------------------------------ */
+
+:root[data-motion="reduced"] {
+  --dur-1: 0ms;
+  --dur-2: 0ms;
+  --dur-3: 0ms;
+  --dur-4: 0ms;
+  --dur-5: 0ms;
+  --motion-distance: 0px;
+  --motion-scale-from: 1;
+  --press-scale: 1;
+  --lift: 0px;
+  --stagger-step: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+    --dur-4: 0ms;
+    --dur-5: 0ms;
+    --motion-distance: 0px;
+    --motion-scale-from: 1;
+    --press-scale: 1;
+    --lift: 0px;
+    --stagger-step: 0ms;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. sRGB fallback for engines without oklch()/color-mix().           */
+/*    Generated by qa/contrast.cjs from the primitives above.         */
+/* ------------------------------------------------------------------ */
+
+/* FALLBACK:BEGIN */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --canvas: #f3f6fa;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-sunken: #eef0f4;
+    --elev-3: #ffffff;
+    --elev-4: #ffffff;
+    --border: #e0e3e7;
+    --border-strong: #7a818a;
+    --text: #141920;
+    --text-muted: #555b64;
+    --accent-contrast: #ffffff;
+    --success: #0e6d32;
+    --success-bg: #e5f9e8;
+    --success-border: #a6daaf;
+    --warning: #844b05;
+    --warning-bg: #ffefe3;
+    --warning-border: #f1bf95;
+    --danger: #a51f1e;
+    --danger-bg: #ffeeec;
+    --danger-border: #fbb7af;
+    --info: #125ca1;
+    --info-bg: #eaf4ff;
+    --info-border: #a5cffe;
+    --accent: #444dc9;
+    --accent-hover: #343b9f;
+    --accent-tint: #eef1fc;
+    --accent-border: #bdc7f2;
+    --surface-hover: #f4f6fd;
+    --surface-selected: #e8ecfb;
+    --mesh-1: rgb(68 77 201 / 0.14);
+    --mesh-2: rgb(190 140 179 / 0.14);
+    --glass-chrome: rgb(255 255 255 / 0.84);
+    --glass-card: rgb(255 255 255 / 0.72);
+    --glass-dialog: rgb(255 255 255 / 0.88);
+    --glass-opaque: rgb(255 255 255 / 0.94);
+    --glass-border: rgb(224 227 231 / 0.70);
+    --mesh-3: rgb(255 255 255 / 0.40);
+  }
+
+  :root[data-theme="dark"] {
+    --canvas: #0d0e11;
+    --surface: #15171a;
+    --surface-raised: #1c1e21;
+    --surface-sunken: #111315;
+    --elev-3: #222427;
+    --elev-4: #282a2d;
+    --border: #2c2e31;
+    --border-strong: #757b84;
+    --text: #e3eaf4;
+    --text-muted: #a8aeb8;
+    --accent-contrast: #0f132c;
+    --success: #83d494;
+    --success-bg: #15291a;
+    --success-border: #31623d;
+    --warning: #f5ac69;
+    --warning-bg: #321f0e;
+    --warning-border: #754a22;
+    --danger: #fea197;
+    --danger-bg: #351c19;
+    --danger-border: #7c433d;
+    --info: #8dc2fe;
+    --info-bg: #152537;
+    --info-border: #325780;
+    --accent: #a2b2fd;
+    --accent-hover: #b5c3fe;
+    --accent-tint: #1e2229;
+    --accent-border: #3a455a;
+    --surface-hover: #1b1e23;
+    --surface-selected: #21262f;
+    --mesh-1: rgb(162 178 253 / 0.12);
+    --mesh-2: rgb(190 140 179 / 0.12);
+    --glass-chrome: rgb(21 23 26 / 0.84);
+    --glass-card: rgb(21 23 26 / 0.72);
+    --glass-dialog: rgb(28 30 33 / 0.88);
+    --glass-opaque: rgb(21 23 26 / 0.94);
+    --glass-border: rgb(44 46 49 / 0.70);
+    --mesh-3: rgb(21 23 26 / 0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas: #0d0e11;
+      --surface: #15171a;
+      --surface-raised: #1c1e21;
+      --surface-sunken: #111315;
+      --elev-3: #222427;
+      --elev-4: #282a2d;
+      --border: #2c2e31;
+      --border-strong: #757b84;
+      --text: #e3eaf4;
+      --text-muted: #a8aeb8;
+      --accent-contrast: #0f132c;
+      --success: #83d494;
+      --success-bg: #15291a;
+      --success-border: #31623d;
+      --warning: #f5ac69;
+      --warning-bg: #321f0e;
+      --warning-border: #754a22;
+      --danger: #fea197;
+      --danger-bg: #351c19;
+      --danger-border: #7c433d;
+      --info: #8dc2fe;
+      --info-bg: #152537;
+      --info-border: #325780;
+      --accent: #a2b2fd;
+      --accent-hover: #b5c3fe;
+      --accent-tint: #1e2229;
+      --accent-border: #3a455a;
+      --surface-hover: #1b1e23;
+      --surface-selected: #21262f;
+      --mesh-1: rgb(162 178 253 / 0.12);
+      --mesh-2: rgb(190 140 179 / 0.12);
+      --glass-chrome: rgb(21 23 26 / 0.84);
+      --glass-card: rgb(21 23 26 / 0.72);
+      --glass-dialog: rgb(28 30 33 / 0.88);
+      --glass-opaque: rgb(21 23 26 / 0.94);
+      --glass-border: rgb(44 46 49 / 0.70);
+      --mesh-3: rgb(21 23 26 / 0.18);
+    }
+  }
+
+  :root[data-accent="blue"] {
+    --accent: #0b64b2;
+    --accent-hover: #074e8c;
+    --accent-tint: #ecf2fa;
+    --accent-border: #b5cde9;
+    --surface-hover: #f3f7fc;
+    --surface-selected: #e5eef8;
+    --mesh-1: rgb(11 100 178 / 0.14);
+    --mesh-2: rgb(175 144 195 / 0.14);
+  }
+
+  :root[data-theme="dark"][data-accent="blue"] {
+    --accent: #80bcfe;
+    --accent-hover: #9fcbfd;
+    --accent-tint: #1d2229;
+    --accent-border: #36465a;
+    --surface-hover: #1a1e23;
+    --surface-selected: #21262f;
+    --mesh-1: rgb(128 188 254 / 0.12);
+    --mesh-2: rgb(175 144 195 / 0.12);
+  }
+
+  :root[data-accent="teal"] {
+    --accent: #0f7175;
+    --accent-hover: #0a585c;
+    --accent-tint: #edf3f3;
+    --accent-border: #b8d0d1;
+    --surface-hover: #f3f8f8;
+    --surface-selected: #e6efef;
+    --mesh-1: rgb(15 113 117 / 0.14);
+    --mesh-2: rgb(129 160 209 / 0.14);
+  }
+
+  :root[data-theme="dark"][data-accent="teal"] {
+    --accent: #56d3da;
+    --accent-hover: #84dde2;
+    --accent-tint: #1d2329;
+    --accent-border: #334a5a;
+    --surface-hover: #1b1e23;
+    --surface-selected: #20272f;
+    --mesh-1: rgb(86 211 218 / 0.12);
+    --mesh-2: rgb(129 160 209 / 0.12);
+  }
+
+  :root[data-accent="emerald"] {
+    --accent: #08734b;
+    --accent-hover: #055939;
+    --accent-tint: #edf3ef;
+    --accent-border: #b7d1c2;
+    --surface-hover: #f3f8f5;
+    --surface-selected: #e6efea;
+    --mesh-1: rgb(8 115 75 / 0.14);
+    --mesh-2: rgb(97 170 193 / 0.14);
+  }
+
+  :root[data-theme="dark"][data-accent="emerald"] {
+    --accent: #5ed99e;
+    --accent-hover: #89e2b3;
+    --accent-tint: #1c232a;
+    --accent-border: #274c5b;
+    --surface-hover: #1a1e24;
+    --surface-selected: #1e2830;
+    --mesh-1: rgb(94 217 158 / 0.12);
+    --mesh-2: rgb(97 170 193 / 0.12);
+  }
+
+  :root[data-accent="amber"] {
+    --accent: #934f06;
+    --accent-hover: #743d03;
+    --accent-tint: #f7f0eb;
+    --accent-border: #dec5b3;
+    --surface-hover: #faf6f3;
+    --surface-selected: #f4ebe4;
+    --mesh-1: rgb(147 79 6 / 0.14);
+    --mesh-2: rgb(154 166 108 / 0.14);
+  }
+
+  :root[data-theme="dark"][data-accent="amber"] {
+    --accent: #fdb175;
+    --accent-hover: #ffc295;
+    --accent-tint: #20222a;
+    --accent-border: #4f4259;
+    --surface-hover: #1c1e24;
+    --surface-selected: #242630;
+    --mesh-1: rgb(253 177 117 / 0.12);
+    --mesh-2: rgb(154 166 108 / 0.12);
+  }
+
+  :root[data-accent="rose"] {
+    --accent: #b4144e;
+    --accent-hover: #8e0d3c;
+    --accent-tint: #fceef0;
+    --accent-border: #efbbc3;
+    --surface-hover: #fdf4f5;
+    --surface-selected: #fae7ea;
+    --mesh-1: rgb(180 20 78 / 0.14);
+    --mesh-2: rgb(192 149 103 / 0.14);
+  }
+
+  :root[data-theme="dark"][data-accent="rose"] {
+    --accent: #fd93a7;
+    --accent-hover: #feadbb;
+    --accent-tint: #1e222a;
+    --accent-border: #46405b;
+    --surface-hover: #1b1e24;
+    --surface-selected: #222630;
+    --mesh-1: rgb(253 147 167 / 0.12);
+    --mesh-2: rgb(192 149 103 / 0.12);
+  }
+}
+/* FALLBACK:END */

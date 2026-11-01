@@ -1,0 +1,75 @@
+# ---- Secrets & credentials (never commit) ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
+client_secret*.json
+credentials*.json
+token*.json
+*gmail*credential*.json
+**/live-ui-email*
+/*.json
+!/package.json
+!/package-lock.json
+
+# ---- Runtime data (database, keys, documents, model, logs) ----
+var/
+tmp/
+*.log
+*.sqlite*
+pg_wal/
+
+# ---- Generated artefacts (publish only the curated subset) ----
+output/*
+!output/README.txt
+!output/diagrams/
+!output/mermaid/
+!output/source/
+!output/pdf/
+output/pdf/**/receipt.json
+output/pdf/**/samples.json
+!output/evidence/
+*.ndjson
+*.zip
+
+# ---- Python ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ---- Node / Playwright verification scripts ----
+node_modules/
+playwright-report/
+test-results/
+
+# ---- LaTeX intermediates ----
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# ---- Editors / OS ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

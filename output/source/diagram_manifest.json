@@ -1,0 +1,13 @@
+{
+  "title": "Invoice automation technical architecture",
+  "date": "2026-10-27",
+  "status": "proposed",
+  "pages": [
+    {
+      "number": 1,
+      "slug": "system-architecture",
+      "title": "System architecture and technology boundaries"
+    }
+  ],
+  "layout_checks": []
+}

@@ -1,0 +1,9 @@
+# Frozen legacy pack. Its template is templates/uk_invoice.tex.j2, kept
+# byte-identical so documents without a presentation block keep their render
+# identity. Only the seller block of a profile applies to this pack.
+id = "uk-classic-v3"
+title = "UK classic A4 (legacy v3)"
+renderer_version = "uk-a4-v3-movement-vat"
+template = "legacy:uk_invoice.tex.j2"
+papers = ["a4"]
+profile_fields = ["seller"]

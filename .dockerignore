@@ -1,0 +1,45 @@
+# ---- Secrets & credentials (never in the build context) ----
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+client_secret*.json
+credentials*.json
+token*.json
+/*.json
+
+# ---- VCS, runtime data and generated artefacts ----
+.git
+var
+tmp
+output
+*.log
+*.ndjson
+*.zip
+
+# ---- Development-only ----
+.github
+.pre-commit-config.yaml
+.editorconfig
+.gitattributes
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+node_modules
+tests
+docs
+*.egg-info
+dist
+build
+.DS_Store
+.idea
+.vscode

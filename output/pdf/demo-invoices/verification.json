@@ -1,0 +1,31 @@
+{
+  "test_command": "PYTHONPATH=src .venv/bin/python -m pytest tests/test_documents.py -q",
+  "test_result": "24 passed in 4.12s",
+  "compiler": "/Library/TeX/texbin/pdflatex",
+  "samples": [
+    {
+      "sample": "vat",
+      "pages": 1,
+      "pdf_sha256": "5f1dcac920151bd295b92c16f32a1a0f7e67b58875f3aeb4db4ce94315fe0dc4",
+      "no_overfull_boxes": true,
+      "demo_label_each_page": true,
+      "visual_review": "PASS; all pages rasterised with Poppler and inspected"
+    },
+    {
+      "sample": "non-vat",
+      "pages": 1,
+      "pdf_sha256": "3149be5b9670114bdda1444d1749d35a43bc24dc12cfe803a676b915f85a5dbd",
+      "no_overfull_boxes": true,
+      "demo_label_each_page": true,
+      "visual_review": "PASS; all pages rasterised with Poppler and inspected"
+    },
+    {
+      "sample": "multi-page",
+      "pages": 4,
+      "pdf_sha256": "856d80ace258740c865ba312942d027c9ad79767ceb65c259c7079df73361ceb",
+      "no_overfull_boxes": true,
+      "demo_label_each_page": true,
+      "visual_review": "PASS; all pages rasterised with Poppler and inspected"
+    }
+  ]
+}

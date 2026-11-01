@@ -1,0 +1,89 @@
+%% Proposed architecture, not implemented or benchmarked.
+%% UK, approximately 200 customers. Only the largest approaches 2M movements.
+%% Monthly period assumed. Total volume, source schemas and peak rates unknown.
+%% PostgreSQL boxes represent logical tables in ONE operational database.
+%% Stage links keep the overview readable. Exact transactions and failure paths
+%% are specified in sequences 02 and 03, not expanded here.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"16px","primaryTextColor":"#183047","lineColor":"#64748b","clusterBkg":"#f8fafc","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff"},"flowchart":{"curve":"linear","nodeSpacing":30,"rankSpacing":45,"padding":16,"htmlLabels":true,"wrappingWidth":290,"subGraphTitleMargin":{"top":14,"bottom":24}}}}%%
+flowchart TB
+    subgraph INTAKE["1  |  ACQUISITION"]
+        direction LR
+        SRC["Sources A and B<br/>Incremental API / CDC / files<br/>Contracts and cadence to confirm"]
+        ING["Intake + normalization<br/>Python workers + SQL<br/>Schema, source keys, Decimal amounts"]
+        RAW[("Original evidence<br/>Object storage<br/>Immutable bytes + checksum")]
+        MOV[("Canonical movement versions<br/>PostgreSQL<br/>Provenance + reconciliation state")]
+        SRC --> ING --> MOV
+        ING -->|"Verify before publishing reference"| RAW
+    end
+
+    subgraph ASSESS["2  |  CONTINUOUS ASSESSMENT"]
+        direction LR
+        RULES["Deterministic controls<br/>SQL + Python<br/>Duplicates, matching, accounting rules<br/>Failures cannot be cleared by ML"]
+        FEAT["Feature builder<br/>Python + SQL<br/>Data available at decision time"]
+        LR["LOGISTIC REGRESSION<br/>Python / scikit-learn<br/>Frozen model · score + threshold policy"]
+        RESULT[("ASSESSMENT RESULTS — PostgreSQL<br/>All outcomes · unavailable score = NULL<br/>Subject ID + version · score + status<br/>Rule / model / policy versions<br/>Feature reference + cutoff · evaluation time")]
+        RULES -->|"Persist rule outcomes independently"| RESULT
+        FEAT --> LR -->|"Persist model score and status"| RESULT
+    end
+
+    subgraph REVIEW["3  |  EXCEPTION REVIEW"]
+        direction LR
+        CASE[("Cases + alert outbox<br/>PostgreSQL transaction<br/>New flag + owner + evidence")]
+        ALERT["Alert worker → email API<br/>Python<br/>One logical email per new flag"]
+        WORK["HUMAN REVIEW<br/>Excel / Power Query or web UI<br/>Evidence + proposed change + reason"]
+        CORR["Authenticated correction API<br/>Python + SQL<br/>Check expected version<br/>Append new version + audit + jobs"]
+        CASE --> ALERT
+        CASE --> WORK --> CORR
+    end
+
+    subgraph BILLING["4  |  MONTHLY BILLING"]
+        direction LR
+        CLOSE["Close gate + frozen snapshot<br/>Python + SQL → PostgreSQL<br/>Completeness, blockers, currency totals"]
+        PDF["Build immutable package<br/>Python → JSON → LaTeX → PDF<br/>Final number / date + exact email<br/>Object storage + hash / SQL reference"]
+        APPROVE["HUMAN APPROVAL<br/>Authenticated web UI + Python API<br/>Exact PDF, sender, recipients, message"]
+        SEND["Issue + reserve + send<br/>SQL gates / outbox + Python worker<br/>Unique billable allocations<br/>Email provider API"]
+        TRACK[("Delivery evidence — PostgreSQL<br/>Attempts + verified provider events<br/>Unknown sends → reconcile<br/>Customer acknowledgement kept separate")]
+        CLOSE -->|"Only if all required controls pass"| PDF --> APPROVE --> SEND --> TRACK
+    end
+
+    subgraph OFFLINE["OFFLINE  |  MODEL TRAINING"]
+        direction LR
+        HIST[("Versioned historical export<br/>Parquet + DuckDB<br/>Features + reviewed labels + cutoff")]
+        TRAIN["Train + validate<br/>Python / scikit-learn<br/>Temporal holdout + threshold selection"]
+        MODEL[("Approved model release<br/>Versioned object storage / registry<br/>Model + preprocessing + feature contract<br/>Threshold policy")]
+        HIST --> TRAIN --> MODEL
+    end
+
+    INTAKE -->|"Durable versions + assessment jobs"| ASSESS
+    ASSESS -->|"Flags and unresolved controls"| REVIEW
+    ASSESS -->|"Current versions + all required assessments"| BILLING
+    REVIEW -.->|"Corrected version → reassess before billing"| ASSESS
+    ASSESS -.->|"Historical features + reviewed labels"| OFFLINE
+    OFFLINE -.->|"Deploy approved model to LR"| ASSESS
+    %% Invisible layout constraint: review is NOT a prerequisite for every invoice.
+    REVIEW ~~~ BILLING
+
+    %% Operational constraints, expanded in README and the sequence diagrams:
+    %% Invalid inputs remain in durable quarantine with source evidence/case.
+    %% Persist deterministic failures and notify without waiting for ML success.
+    %% Unavailable score = NULL, never zero. Low score cannot clear a rule failure.
+    %% Persist every assessment, including PASS, FAIL, PENDING and UNAVAILABLE.
+    %% Corrections retain raw input/old versions and invalidate unissued drafts.
+    %% Issued documents require authorized adjustments, not silent regeneration.
+    %% PDF publication and SQL commit are separate recovery boundaries.
+    %% Human approval is fingerprint-bound, never just an Excel checkbox.
+    %% Exactly-once email is not guaranteed. Reconcile uncertain attempts.
+    %% Mail-server delivery does not prove reading or explicit customer receipt.
+    %% Excel is a filtered worklist. Optional VBA refreshes/opens only.
+    %% CSV is for exchange. Parquet is for historical analytical reads.
+
+    classDef process fill:#eef5ff,stroke:#4d78ad,color:#183047;
+    classDef store fill:#e5f5ef,stroke:#247d68,color:#153e34;
+    classDef human fill:#fff3d6,stroke:#ba8420,color:#684508;
+    classDef model fill:#eee7ff,stroke:#7952b3,color:#3e2469,stroke-width:2px;
+    classDef result fill:#d5f2e8,stroke:#13765b,color:#123f31,stroke-width:3px;
+    class SRC,ING,RULES,FEAT,ALERT,CORR,CLOSE,PDF,SEND process;
+    class RAW,MOV,CASE,TRACK,HIST,MODEL store;
+    class WORK,APPROVE human;
+    class LR,TRAIN model;
+    class RESULT result;

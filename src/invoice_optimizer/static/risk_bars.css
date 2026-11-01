@@ -1,0 +1,244 @@
+/* Risk driver bars. Diverging tokens: raises score = --diverge-up,
+   reduces score = --diverge-down; legend text uses status text tokens. */
+
+.risk-driver-box {
+  border: 1px solid var(--border, #dbe5ea);
+  border-radius: var(--radius-lg, 12px);
+  padding: 13px;
+  background: var(--surface-sunken, #f8fafb);
+  margin: 12px 0;
+  min-width: 0;
+}
+
+.risk-driver-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.risk-driver-heading>span {
+  color: var(--text-muted, #627583);
+  font-size: 12px;
+}
+
+.risk-driver-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.risk-up {
+  --driver-color: var(--diverge-up, #ad572b);
+  --driver-text: var(--danger, #ad572b);
+}
+
+.risk-down {
+  --driver-color: var(--diverge-down, #087e77);
+  --driver-text: var(--info, #087e77);
+}
+
+.risk-neutral {
+  --driver-color: var(--chart-neutral, #80929b);
+  --driver-text: var(--text-muted, #637680);
+}
+
+.risk-driver-legend span {
+  color: var(--driver-text, var(--driver-color));
+}
+
+.risk-driver-list {
+  display: grid;
+  gap: 4px;
+}
+
+.risk-driver {
+  position: relative;
+  display: block;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg, 8px);
+  transition: background-color var(--dur-2, .16s) var(--ease-out, ease), border-color var(--dur-2, .16s) var(--ease-out, ease), transform var(--dur-2, .16s) var(--ease-out, ease);
+  color: inherit;
+  cursor: help;
+}
+
+.risk-driver:hover,
+.risk-driver:focus {
+  background: var(--surface, #fff);
+  border-color: var(--border-strong, #c5d4dd);
+  transform: translateX(2px);
+  outline-offset: 2px;
+  z-index: 2;
+}
+
+.risk-driver-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.risk-driver-direction {
+  color: var(--driver-text, var(--driver-color));
+}
+
+.risk-driver-value {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted, #607481);
+  margin: 3px 0 5px;
+  overflow-wrap: anywhere;
+}
+
+.risk-driver-track {
+  display: block;
+  height: 6px;
+  background: var(--border, #e1e8ec);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.risk-driver-fill {
+  display: block;
+  height: 100%;
+  background: var(--driver-color);
+  border-radius: 5px;
+  transform-origin: left;
+  animation: risk-bar-enter var(--dur-4, .35s) var(--ease-out, ease-out) both;
+  animation-delay: var(--driver-delay,0ms);
+}
+
+.risk-driver-tooltip {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - 3px);
+  padding: 10px 12px;
+  background: var(--text, #193947);
+  color: var(--canvas, #fff);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-2, 0 5px 20px #122c4324);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity var(--dur-2, .14s) var(--ease-out, ease), transform var(--dur-2, .14s) var(--ease-out, ease);
+  z-index: 4;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.risk-driver-tooltip>span,
+.risk-driver-tooltip>strong {
+  display: block;
+  margin: 3px 0;
+}
+
+.risk-driver:hover>.risk-driver-tooltip,
+.risk-driver:focus>.risk-driver-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.risk-driver-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted, #637680);
+  margin: 10px 0 0;
+}
+
+.risk-binding-warning {
+  font-size: 12px;
+  color: var(--warning, #a34627);
+}
+
+.risk-drivers-loading,
+.risk-drivers-unavailable {
+  font-size: 12px;
+  color: var(--text-muted, #607481);
+  border: 1px dashed var(--border-strong, #cedae1);
+  border-radius: var(--radius-lg, 10px);
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.risk-drivers-unavailable p {
+  margin: 6px 0;
+}
+
+.risk-drivers-unavailable>span {
+  font-size: 12px;
+}
+
+@keyframes risk-bar-enter {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .risk-driver,
+  .risk-driver-tooltip {
+    transition: background-color var(--dur-2, .16s) var(--ease-out, ease), border-color var(--dur-2, .16s) var(--ease-out, ease), transform var(--dur-2, .16s) var(--ease-out, ease);
+    transform: none;
+  }
+  .risk-driver-fill {
+    animation: risk-bar-enter var(--dur-4, .35s) var(--ease-out, ease-out) both;
+  }
+}
+
+.swipe-full-evidence {
+  padding: 14px 0;
+}
+
+.swipe-full-evidence>.risk-driver-box {
+  max-width: 680px;
+}
+
+.swipe-confirm-notice p {
+  margin: 8px 0 0;
+}
+
+@media (min-width: 960px) {
+  .card-deck .review-card.swipe-evidence-card {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 8px 24px;
+    align-items: start;
+  }
+  .card-deck .review-card-top,
+  .card-deck .review-card h3,
+  .card-deck .review-movement-ref,
+  .card-deck .review-version-label,
+  .card-deck .review-card-description {
+    grid-column: 1 / -1;
+  }
+  .card-deck .review-card [data-card-drivers] {
+    grid-column: 2;
+    grid-row: 6 / span 4;
+  }
+  .card-deck .review-card .review-transaction,
+  .card-deck .review-card .review-model-summary,
+  .card-deck .review-card .review-card-sources,
+  .card-deck .review-card>button {
+    grid-column: 1;
+  }
+  .card-deck .review-card .risk-driver-box {
+    margin-top: 0;
+  }
+  .card-deck .invoice-paper {
+    min-height: 240px;
+  }
+}

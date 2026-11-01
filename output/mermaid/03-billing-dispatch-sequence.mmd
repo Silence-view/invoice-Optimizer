@@ -1,0 +1,87 @@
+%% Proposed architecture, not an implemented or benchmarked system.
+%% UK company, approximately 200 customers. Largest customer: up to 2 million movements.
+%% Monthly interpretation is assumed. Total volume and input schemas remain unknown.
+%% Invoice/receipt type, VAT rules, legal issue policy and billable components require validation.
+sequenceDiagram
+    autonumber
+    participant S as Monthly scheduler
+    participant C as Close and render workers - Python SQL LaTeX
+    participant D as Operational DB - PostgreSQL
+    actor U as Reviewer via Excel or web
+    participant A as Control API - Python
+    participant W as Dispatch worker - Python
+    participant E as Email provider API
+    participant V as Event receiver - Python
+
+    S->>C: Close customer and accounting period
+    C->>D: Acquire close-scope lock, verify source coverage, reconciliation and blockers
+    Note over C,D: Processing all received rows does not establish source completeness.<br/>Use contracted manifests, counters or other source completion evidence.
+    alt Required controls pass
+        C->>D: Freeze consistent membership, source cutoffs, rules and captured scope generation
+        C->>D: Reserve final document number and date under the agreed issuance policy
+        Note over C,D: Reservation and rendering are not legal issuance.<br/>Any required date, number, content or recipient change creates a new package for review.<br/>Manage unused reservations according to the approved numbering policy.
+        C->>C: Calculate exact decimal amounts, reconcile, build invoice JSON and exact email envelope
+        C->>C: Escape data into versioned LaTeX, compile in isolation, upload and verify PDF
+        C->>D: Publish immutable package, document fields, artifact hashes and READY_FOR_REVIEW
+        U->>A: Open exact package preview
+        A->>D: Read PDF, message, recipients, control evidence and package fingerprint
+        A-->>U: Show final document and send envelope
+        U->>A: Approve package ID, expected version and fingerprint
+        A->>D: BEGIN, lock close scope and package, validate actor, generation, gates and fingerprint
+        alt Current package and issuance policy permit approval-time issue
+            A->>D: Claim stable billable components, record explicit ISSUE event, insert approval and outbox, COMMIT
+            Note over A,D: Original issuance enforces UNIQUE issuer and stable billable-component identity.<br/>The constraint does not depend only on movement version: a correction cannot rebill the same component.<br/>Authorized adjustments use separate adjustment components linked to the original.<br/>Issue event, allocation claims, approval and dispatch job commit atomically in this policy path.
+            A-->>U: ISSUED and APPROVED_QUEUED, with audit references
+        else Explicit issue event already exists under the agreed policy
+            A->>D: Verify issue event and exclusive component claims, insert approval and outbox, COMMIT
+            Note over A,D: Record issuance at its agreed accounting event, not at PDF rendering or email delivery.<br/>This branch requires issue evidence that matches the exact approved document.<br/>Approval and outbox insertion are atomic, do not issue the same components again.
+            A-->>U: Show actual issuance and approval states separately
+        else Stale package, changed controls, duplicate component or issue-policy gate unmet
+            A->>D: ROLLBACK, preserve conflict evidence
+            A-->>U: Block dispatch, rebuild, reconcile or request authorized adjustment
+        end
+    else Required coverage or controls are missing
+        C->>D: Record blocked close and evidence, produce no sendable package
+    end
+
+    opt Eligible approved dispatch exists
+        opt Reviewer requests revocation before dispatch reservation
+            U->>A: Revoke transport approval or request a replacement package
+            A->>D: TX: lock same package and dispatch rows, revoke approval and cancel queued job
+            Note over A,D: Cancelling transport does not undo an already recorded accounting ISSUE event.<br/>Issued document changes follow the authorized adjustment process.
+        end
+
+        W->>D: TX: same row locks, validate approval and fingerprint, reserve identified attempt, COMMIT
+        alt Valid approval and eligible dispatch job
+            D-->>W: Return immutable approved envelope and attempt reference
+            Note over A,W: Revocation and reservation serialize through the same lock boundary.<br/>Once reservation succeeds, record cancellation requests but do not promise recall.<br/>Do not mutate the reserved payload or blindly reclaim an expired attempt lease.
+            W->>E: Submit exact approved payload with stable attempt reference
+            alt Provider definitely accepts
+                E-->>W: Accepted and provider message ID
+                W->>D: Record ACCEPTED and response evidence
+            else Provider definitely rejects
+                E-->>W: Definite rejection with error evidence
+                W->>D: Record FAILED, classify retryability under provider contract
+            else Timeout, lost response or worker crash creates ambiguity
+                W->>D: Record or recover UNKNOWN, retain attempt and payload evidence
+                Note over W,D: Lease expiry is not evidence that submission never happened.<br/>Do not automatically resubmit a potentially accepted attempt.
+                W->>E: Reconcile by provider reference or supported request query
+                alt Acceptance established
+                    W->>D: Resolve ACCEPTED and bind provider message ID
+                else Non-acceptance established or safe provider idempotency applies
+                    W->>D: Authorize controlled retry using the same approved payload
+                else Outcome remains uncertain or query is unsupported
+                    W->>D: Keep UNKNOWN, require operational resolution
+                end
+            end
+        else Revoked, cancelled, stale or otherwise ineligible
+            D-->>W: Suppress submission and record reason
+        end
+    end
+
+    opt Provider event is available at any time after submission
+        E->>V: Delivery, bounce or delay event
+        V->>D: Authenticate, deduplicate and append event, reconcile attempt correlation
+        Note over V,D: Events may arrive before send-result persistence, out of order or repeatedly.<br/>Retain unmatched events for reconciliation and keep occurrence plus receipt times.<br/>A delivery event can be followed by a bounce.
+    end
+    Note over U,V: Keep dispatch, delivery and customer acknowledgement as separate evidence dimensions.<br/>Provider acceptance is not delivery, server delivery is not human reading.<br/>Only an explicit authenticated customer action records acknowledgement.

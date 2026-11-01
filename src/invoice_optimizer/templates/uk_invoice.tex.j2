@@ -1,0 +1,226 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[margin=18mm,top=22mm,bottom=23mm,headheight=15pt,headsep=8mm]{geometry}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[table]{xcolor}
+\usepackage{array,tabularx,longtable,booktabs,fancyhdr,graphicx}
+\definecolor{ink}{HTML}{182F46}
+\definecolor{muted}{HTML}{5C6B78}
+\definecolor{pale}{HTML}{F0F4F7}
+\definecolor{line}{HTML}{D7E0E6}
+\definecolor{demo}{HTML}{92400E}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.3}
+\setlength{\emergencystretch}{3em}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcommand{\fitnum}[2]{\begingroup\sbox0{#2}\ifdim\wd0>#1\resizebox{#1}{!}{#2}\else#2\fi\endgroup}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}Invoice << document.invoice_number | tex >>}
+<% if document.synthetic %>
+\fancyhead[R]{\scriptsize\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE}
+<% else %>
+\fancyhead[R]{\small\color{muted}<< document.period | tex >>}
+<% endif %>
+\fancyfoot[L]{\scriptsize\color{muted}<< document.seller.legal_name | tex >>}
+\fancyfoot[R]{\scriptsize\color{muted}Page \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=15
+\begin{document}
+\color{ink}
+\raggedright
+\begin{minipage}[t]{0.57\textwidth}
+\vspace{0pt}
+\raggedright
+{\Large\bfseries << document.seller.legal_name | tex >>}\par
+{\small << document.seller.address | tex >>\par
+<< document.seller.email | tex >>\par
+Company no. << document.seller.company_number | tex >>
+<% if vat_enabled %>
+\par VAT no. << document.seller.vat_number | tex >>
+<% endif %>
+}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.39\textwidth}\raggedleft
+\vspace{0pt}
+{\Huge\bfseries <% if vat_enabled %>VAT <% endif %>INVOICE}\par
+{\large << document.invoice_number | tex >>}\par
+{\small\color{muted}Billing period: << document.period | tex >>}
+\end{minipage}
+\par\vspace{5mm}
+<% if document.synthetic %>
+\colorbox{pale}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\centering\small\bfseries\color{demo}SYNTHETIC DEMO / NOT A TAX INVOICE\par\normalfont\footnotesize Test data and demonstration payment details. Do not pay.}}
+\vspace{4mm}
+<% endif %>
+\begin{minipage}[t]{0.53\textwidth}
+\vspace{0pt}
+\raggedright
+{\small\bfseries\color{muted}BILL TO}\par
+{\bfseries << document.customer.legal_name | tex >>}\par
+{\small << document.customer.address | tex >>\par
+<< document.customer.email | tex >>\par
+Customer ID: << document.customer.id | tex >>
+<% if document.customer.vat_number %>
+\par VAT no. << document.customer.vat_number | tex >>
+<% endif %>
+}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.42\textwidth}
+\vspace{0pt}
+\small
+\begin{tabularx}{\linewidth}{@{}>{\color{muted}}l >{\raggedleft\arraybackslash}X@{}}
+Invoice date & << invoice_date | tex >> \\
+Supply / tax point & << tax_point | tex >> \\
+Payment due & \textbf{<< due_date | tex >>} \\
+Reference / PO & << document.reference | tex >> \\
+Currency & GBP (pounds sterling) \\
+\end{tabularx}
+\end{minipage}
+\par\vspace{5mm}
+<% if line_format == "ITEMIZED" %>
+{\small\bfseries Itemised movement detail: << movement_count >> movement<% if movement_count != 1 %>s<% endif %>, listed on the following pages.}\par
+<% endif %>
+{\small <% if vat_enabled %>All unit prices and net amounts exclude VAT.<% else %>All amounts are in GBP. No VAT is charged.<% endif %>}
+\begingroup
+\fontsize{8}{10}\selectfont
+\arrayrulecolor{line}
+\begin{longtable}{@{}L{62.3mm}R{10mm}R{19mm}R{19mm}R{12mm}R{18mm}R{21mm}@{}}
+\rowcolor{ink}\color{white}\bfseries Description & \color{white}\bfseries Qty & \color{white}\bfseries Unit (GBP) & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Total (GBP) \\
+\endfirsthead
+\multicolumn{7}{@{}l}{\color{muted}Invoice << document.invoice_number | tex >> -- continued} \\
+\rowcolor{ink}\color{white}\bfseries Description & \color{white}\bfseries Qty & \color{white}\bfseries Unit (GBP) & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Total (GBP) \\
+\endhead
+\multicolumn{7}{r}{\color{muted}Continued on the next page} \\
+\endfoot
+\endlastfoot
+<% for row in rows %>
+<% if row.continuation %>
+{\color{muted}(continued) }<< row.description | tex >> & & & & & & \\
+<% else %>
+<< row.description | tex >> & \fitnum{10mm}{<< row.quantity | tex >>} & \fitnum{19mm}{<< row.unit_price | tex >>} & \fitnum{19mm}{<< row.net | tex >>} & <% if vat_enabled %>\fitnum{12mm}{<< row.rate | tex >>}<% else %>--<% endif %> & \fitnum{18mm}{<< row.vat | tex >>} & \fitnum{21mm}{<< row.gross | tex >>} \\
+<% endif %>
+<% if row.last %>\hline<% endif %>
+<% endfor %>
+\end{longtable}
+\endgroup
+\begin{minipage}{\textwidth}
+\raggedright
+<% if vat_enabled %>
+{\small\bfseries VAT SUMMARY}\par
+\begin{tabularx}{\textwidth}{@{}l >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X@{}}
+\rowcolor{pale}\small VAT rate & \small Net (GBP) & \small VAT (GBP) & \small Total (GBP) \\
+<% for group in vat_groups %>
+\small << group.rate | tex >>\% & \small << group.net | tex >> & \small << group.vat | tex >> & \small << group.gross | tex >> \\
+<% endfor %>
+\end{tabularx}
+<% else %>
+{\small\color{muted}Supplier is not VAT registered. No VAT has been charged.}
+<% endif %>
+\vspace{3mm}
+\begin{flushright}
+\begin{tabular}{@{}lr@{}}
+Net total & GBP << totals.net | tex >> \\
+VAT total & GBP << totals.vat | tex >> \\
+\midrule
+{\large\bfseries Amount due} & {\large\bfseries GBP << totals.gross | tex >>} \\
+\end{tabular}
+\end{flushright}
+\vspace{3mm}
+{\small\bfseries PAYMENT INFORMATION}\par
+{\small << document.payment_terms | tex >>\par
+Cash discount: none offered. Quote \textbf{<< document.invoice_number | tex >>} as your payment reference.}
+\vspace{2mm}
+\colorbox{pale}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\small
+\begin{tabularx}{\linewidth}{@{}l X l X@{}}
+Bank & << document.seller.bank_name | tex >> & Sort code & << document.seller.sort_code | tex >> \\
+Account name & << document.seller.account_name | tex >> & Account no. & << document.seller.account_number | tex >> \\
+\end{tabularx}}}
+<% if document.synthetic %>
+\par{\footnotesize\color{demo}Demonstration only. The company, VAT and bank identifiers are test placeholders.}
+<% endif %>
+\end{minipage}
+<% if line_format == "ITEMIZED" %>
+\clearpage
+{\Large\bfseries ITEMISED MOVEMENT DETAIL}\par
+{\small Invoice << document.invoice_number | tex >>\quad Billing period: << document.period | tex >>}\par
+<% if movement_vat_enabled %>
+<% if vat_enabled %>
+{\small All << movement_count >> included movements are listed below. Movement VAT is a breakdown of the same monthly charge, using the invoice's declared << movement_vat_rate | tex >>\% rate. Invoice totals are unchanged; this does not assign a tax classification to the underlying purchases.}\par
+{\footnotesize\color{muted}Each movement's VAT is rounded to the nearest penny; half pennies round up. Any difference from invoice VAT is shown explicitly below. Dates and times are UTC. Continued text carries no repeated amounts.}
+<% else %>
+{\small All included movements are listed below. No VAT is charged because the supplier is not VAT registered. This detail is a breakdown of the same monthly charge; invoice totals are unchanged.}\par
+{\footnotesize\color{muted}Dates and times are UTC. Continued text carries no repeated amounts.}
+<% endif %>
+\begingroup
+\fontsize{8}{10}\selectfont
+\arrayrulecolor{line}
+\begin{longtable}{@{}R{7mm}L{45mm}L{44.3mm}R{19mm}R{8mm}R{19mm}R{19mm}@{}}
+\rowcolor{ink}\color{white}\bfseries No. & \color{white}\bfseries Movement / UTC date / supplier & \color{white}\bfseries Description & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Gross (GBP) \\
+\endfirsthead
+\multicolumn{7}{@{}l}{\color{muted}Invoice << document.invoice_number | tex >> -- itemised movements continued} \\
+\rowcolor{ink}\color{white}\bfseries No. & \color{white}\bfseries Movement / UTC date / supplier & \color{white}\bfseries Description & \color{white}\bfseries Net (GBP) & \color{white}\bfseries VAT \% & \color{white}\bfseries VAT (GBP) & \color{white}\bfseries Gross (GBP) \\
+\endhead
+\multicolumn{7}{r}{\color{muted}Movement detail continues on the next page} \\
+\endfoot
+\endlastfoot
+<% for row in movement_rows %>
+<% if row.continuation %>
+ & <% if row.external_id %>Ref: << row.external_id | texdetail >><% endif %><% if row.external_id and row.supplier_id %>\newline <% endif %><% if row.supplier_id %>Supplier: << row.supplier_id | texdetail >><% endif %> & {\color{muted}(continued) }<< row.description | texdetail >> & & & & \\
+<% else %>
+\fitnum{7mm}{<< row.row_no >>} & << row.event_date | texdetail >> << row.event_time | texdetail >>\newline Ref: << row.external_id | texdetail >>\newline Supplier: << row.supplier_id | texdetail >> & << row.description | texdetail >> & \fitnum{19mm}{<< row.amount | tex >>} & << row.vat_rate | tex >> & \fitnum{19mm}{<< row.vat_amount | tex >>} & \fitnum{19mm}{<< row.gross_amount | tex >>} \\
+<% endif %>
+<% if row.last %>\hline<% endif %>
+<% endfor %>
+\end{longtable}
+\begin{minipage}{\textwidth}
+\begin{tabular}{@{}L{100.5mm}R{19mm}R{8mm}R{19mm}R{19mm}@{}}
+\bfseries Detail reconciliation & \bfseries Net (GBP) & & \bfseries VAT (GBP) & \bfseries Gross (GBP) \\
+Movement subtotal & \fitnum{19mm}{<< movement_vat_subtotals.net | tex >>} & & \fitnum{19mm}{<< movement_vat_subtotals.vat | tex >>} & \fitnum{19mm}{<< movement_vat_subtotals.gross | tex >>} \\
+<% if movement_vat_has_adjustment %>
+Invoice VAT rounding adjustment & 0.00 & & \fitnum{19mm}{<< movement_vat_adjustment | tex >>} & \fitnum{19mm}{<< movement_vat_adjustment | tex >>} \\
+<% endif %>
+\hline
+\bfseries Reconciled invoice totals & \bfseries\fitnum{19mm}{<< totals.net | tex >>} & & \bfseries\fitnum{19mm}{<< totals.vat | tex >>} & \bfseries\fitnum{19mm}{<< totals.gross | tex >>} \\
+\end{tabular}
+\par{\footnotesize\color{muted}These reconciled amounts match the invoice summary. The rounding adjustment, when present, changes VAT and gross only; movement net amounts are unchanged.}
+\end{minipage}
+\endgroup
+<% else %>
+{\small All << movement_count >> included movements are listed below. Net amounts exclude VAT; the aggregate VAT and amount due remain in the invoice summary. Dates and times are shown in UTC.}\par
+{\footnotesize\color{muted}Long descriptions or identifiers continue on subsequent rows. Each movement amount appears once.}
+\begingroup
+\fontsize{8}{10}\selectfont
+\arrayrulecolor{line}
+\begin{longtable}{@{}R{7mm}L{24mm}L{31mm}L{60.3mm}L{21mm}R{20mm}@{}}
+\rowcolor{ink}\color{white}\bfseries No. & \color{white}\bfseries Date / time (UTC) & \color{white}\bfseries Movement reference & \color{white}\bfseries Description & \color{white}\bfseries Supplier & \color{white}\bfseries Net (GBP) \\
+\endfirsthead
+\multicolumn{6}{@{}l}{\color{muted}Invoice << document.invoice_number | tex >> -- itemised movements continued} \\
+\rowcolor{ink}\color{white}\bfseries No. & \color{white}\bfseries Date / time (UTC) & \color{white}\bfseries Movement reference & \color{white}\bfseries Description & \color{white}\bfseries Supplier & \color{white}\bfseries Net (GBP) \\
+\endhead
+\multicolumn{6}{r}{\color{muted}Movement detail continues on the next page} \\
+\endfoot
+\endlastfoot
+<% for row in movement_rows %>
+<% if row.continuation %>
+ & & << row.external_id | texdetail >> & {\color{muted}(continued) }<< row.description | texdetail >> & << row.supplier_id | texdetail >> & \\
+<% else %>
+\fitnum{7mm}{<< row.row_no >>} & << row.event_date | texdetail >>\newline << row.event_time | texdetail >> & << row.external_id | texdetail >> & << row.description | texdetail >> & << row.supplier_id | texdetail >> & \fitnum{20mm}{<< row.amount | tex >>} \\
+<% endif %>
+<% if row.last %>\hline<% endif %>
+<% endfor %>
+\end{longtable}
+\endgroup
+<% endif %>
+<% endif %>
+\end{document}

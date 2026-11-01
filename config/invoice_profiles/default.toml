@@ -1,0 +1,43 @@
+# Invoice format profile used for newly frozen drafts (INVOICE_FORMAT_PROFILE).
+# Company data only: validated by `invoice-optimizer format validate default`.
+# Editing this file never changes an existing draft or approved invoice.
+description = "Default modern layout with the synthetic demonstration seller"
+pack = "uk-modern-v1"
+paper = "a4"                  # a4 | letter
+margins_mm = 16               # 12..25
+font = "inter"                # inter | helvet | sourcesanspro | FiraSans | roboto | tgheros | lato
+date_format = "d MMM yyyy"    # d MMM yyyy | dd MMM yyyy | d MMMM yyyy | dd/MM/yyyy | yyyy-MM-dd
+vat_summary = "multi_rate_only"   # always | multi_rate_only
+footer_text = ""              # empty: seller name, company and VAT numbers
+logo = ""                     # path inside config/invoice_profiles/assets/, e.g. "acme-logo.png"
+
+[colors]                      # six-digit hex; each needs >= 4.5:1 contrast on white
+accent = "1F3A5F"
+ink = "1B2430"
+muted = "5B6675"
+
+[labels]                      # optional overrides of known labels, max 80 characters
+
+[columns]                     # quantity, unit_price and vat_rate are legally required
+line_vat = true
+line_total = true
+
+[payment]
+show_iban_bic = true
+extra_note = ""
+
+[seller]
+legal_name = "Example Procurement Services Ltd (Synthetic)"
+address = """100 Example Street
+London
+ZZ1 1ZZ
+United Kingdom"""
+email = "billing@example.test"
+company_number = "DEMO ONLY"
+vat_number = "DEMO - NOT A VAT REGISTRATION"
+bank_name = "Demonstration bank - do not pay"
+account_name = "SYNTHETIC DEMO - NO PAYMENT"
+sort_code = "00-00-00"
+account_number = "00000000"
+iban = "GB00 DEMO 0000 0000 0000 00"
+bic = "DEMOGB00XXX"

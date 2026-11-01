@@ -1,0 +1,1258 @@
+/*
+ * Market layer: the investing-platform visual language on top of app.css.
+ * Measured references (TradingView, Kraken, Binance, Coinbase, Yahoo, Google
+ * Finance; see docs/UI_DESIGN.md "Market layer"):
+ *   - one up / down / flat token set, brighter in dark mode, never colour-only;
+ *   - flat 12-16px cards with hairlines, shadows only on floating layers;
+ *   - tabular numbers everywhere, uppercase 12px KPI labels;
+ *   - a 720px top-anchored command palette with grouped, filterable results.
+ * Loaded last. Only class/ID hooks already in the DOM contract are styled.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Market tokens                                                    */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* Light: up/down both near L 0.53 so they carry equal weight (>= 4.5:1 on white). */
+  --up: oklch(0.52 0.115 165);
+  --down: oklch(0.54 0.19 25);
+  --flat: var(--text-muted);
+  --up-bg: color-mix(in oklch, var(--up) 12%, var(--surface));
+  --down-bg: color-mix(in oklch, var(--down) 11%, var(--surface));
+  --flat-bg: var(--surface-sunken);
+  --hairline: color-mix(in oklch, var(--border) 70%, var(--surface));
+  --card-radius: 14px;
+  --kpi-label: 12px;
+}
+
+:root[data-theme="dark"] {
+  /* Dark: three cool tonal steps ~4-5 L apart (Binance/Finviz), border not shadow. */
+  --n-h: 262;
+  --n-c: 0.012;
+  --n-c-strong: 0.018;
+  --l-canvas: 0.16;
+  --l-surface: 0.205;
+  --l-raised: 0.245;
+  --l-sunken: 0.18;
+  --l-border: 0.305;
+  --up: oklch(0.76 0.15 158);
+  --down: oklch(0.72 0.165 22);
+  --hairline: color-mix(in oklch, var(--border) 80%, var(--surface));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --n-h: 262;
+    --n-c: 0.012;
+    --n-c-strong: 0.018;
+    --l-canvas: 0.16;
+    --l-surface: 0.205;
+    --l-raised: 0.245;
+    --l-sunken: 0.18;
+    --l-border: 0.305;
+    --up: oklch(0.76 0.15 158);
+    --down: oklch(0.72 0.165 22);
+    --hairline: color-mix(in oklch, var(--border) 80%, var(--surface));
+  }
+}
+
+@supports not (color: oklch(0 0 0)) {
+  :root { --up: #06806b; --down: #cc2f3c; --up-bg: #e6f4f1; --down-bg: #fbeaec; --hairline: #e9ecef; }
+  :root[data-theme="dark"] { --up: #3fcf8e; --down: #f77c80; --up-bg: #12291f; --down-bg: #33191b; --hairline: #262a31; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Numbers                                                          */
+/* ------------------------------------------------------------------ */
+
+.number,
+td.number,
+th.number,
+.metric-value,
+.score,
+.paper-total strong,
+.verification-total,
+.funnel-value,
+.chart-bar-value,
+.chart-legend strong,
+.review-item-figures,
+.quote-value,
+.delta-chip,
+.chip-count,
+.automation-facts strong,
+.nav-count {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+th.number,
+td.number {
+  text-align: right;
+}
+
+.delta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.delta-chip.is-up { color: var(--up); background: var(--up-bg); }
+.delta-chip.is-down { color: var(--down); background: var(--down-bg); }
+.delta-chip.is-flat { color: var(--flat); background: var(--flat-bg); }
+
+/* Risk score: value + a 3-band meter. NULL stays a grey "Unavailable". */
+.score[data-band] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.score[data-band]::before {
+  content: "";
+  flex: none;
+  width: 36px;
+  height: 6px;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, currentColor 0 calc(var(--v, 0) * 100%), transparent 0) no-repeat,
+    color-mix(in oklch, currentColor 18%, transparent);
+}
+
+.score[data-band="high"] { color: var(--down); }
+.score[data-band="mid"] { color: var(--warning); }
+.score[data-band="low"] { color: var(--up); }
+
+.score.missing {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Command palette (fixes the narrow, corner-stuck sheet)           */
+/* ------------------------------------------------------------------ */
+
+dialog.command-palette {
+  position: fixed;
+  inset: 12vh 0 auto 0;
+  width: min(720px, calc(100vw - 32px));
+  max-width: none;
+  height: auto;
+  max-height: min(620px, 76vh);
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 64px rgb(var(--shadow-rgb) / calc(var(--shadow-a3) + .06)), 0 2px 8px rgb(var(--shadow-rgb) / var(--shadow-a2)), var(--highlight);
+}
+
+dialog.command-palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.command-palette::backdrop {
+  background: rgb(12 15 22 / .42);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* Glass keeps the panel near-opaque: results must stay readable over any page. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-surface="glass"] dialog.command-palette {
+    background: color-mix(in srgb, var(--surface-raised) 94%, transparent);
+    border-color: var(--border);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  dialog.command-palette,
+  :root[data-surface="glass"] dialog.command-palette {
+    background: var(--surface-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  dialog.command-palette::backdrop {
+    background: rgb(12 15 22 / .6);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.command-palette .palette-search,
+.command-palette .palette-scopes,
+.command-palette .palette-footer {
+  flex: none;
+}
+
+.command-palette .palette-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.command-palette .palette-search-icon {
+  display: inline-flex;
+  color: var(--text-muted);
+}
+
+.command-palette .palette-search-icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.command-palette .palette-input,
+.command-palette .palette-input:focus-visible {
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  min-height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.command-palette .palette-input::placeholder {
+  color: var(--text-muted);
+}
+
+.command-palette .palette-search:focus-within {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.command-palette .palette-esc {
+  min-height: 28px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+}
+
+.command-palette .palette-scopes {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--hairline);
+  scrollbar-width: none;
+}
+
+.command-palette.is-help .palette-scopes {
+  display: none;
+}
+
+/* The scope bar is role="group" too: outrank app.css's group-heading rule
+   (".command-palette [role=group] > :first-child"), which otherwise restyled
+   the first pill ("All") as a muted section label. */
+.command-palette .palette-scopes[role="group"] > .palette-scope {
+  flex: none;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.command-palette .palette-scopes[role="group"] > .palette-scope[aria-pressed="true"] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--canvas);
+}
+
+.command-palette [role="listbox"] {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 6px 8px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.command-palette .palette-section {
+  padding: 12px 12px 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.command-palette [role="option"] {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+.command-palette [role="option"][aria-selected="true"] {
+  background: var(--surface-selected);
+  box-shadow: none;
+}
+
+.command-palette .palette-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.command-palette [role="option"][aria-selected="true"] .palette-icon {
+  border-color: var(--accent-border);
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.command-palette [data-kind="find"] .palette-icon,
+.command-palette [data-kind="record"] .palette-icon {
+  color: var(--accent);
+}
+
+.command-palette .palette-icon .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.command-palette .palette-text {
+  display: grid;
+  min-width: 0;
+}
+
+.command-palette .palette-label,
+.command-palette .palette-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-palette .palette-label {
+  font-weight: 500;
+}
+
+.command-palette .palette-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.command-palette mark {
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.command-palette .palette-keys {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0;
+}
+
+.command-palette .palette-enter {
+  color: var(--text-muted);
+  opacity: 0;
+  font-size: 14px;
+}
+
+.command-palette [role="option"][aria-selected="true"] .palette-enter {
+  opacity: 1;
+}
+
+.command-palette .palette-empty {
+  margin: 0;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.command-palette .palette-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.command-palette .palette-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.command-palette .palette-footer-end {
+  margin-left: auto;
+}
+
+/* Narrow windows, phones and >= 175% zoom: still a floating panel, edge to edge with an 8px gutter. */
+@media (max-width: 639.98px) {
+  dialog.command-palette {
+    inset: 8px 0 auto 0;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+
+  .command-palette .palette-footer {
+    display: none;
+  }
+
+  .command-palette .palette-search {
+    padding-left: 14px;
+  }
+
+  .command-palette .palette-input,
+  .command-palette .palette-input:focus-visible {
+    font-size: 16px;
+  }
+
+  .command-palette .palette-scopes {
+    padding: 8px 12px;
+  }
+}
+
+/* Topbar trigger: a visible search pill ("Search ⌘K"), TradingView style. */
+@media (min-width: 960px) {
+  .command-trigger {
+    height: 38px;
+    padding: 0 8px 0 14px;
+    flex-basis: 380px;
+  }
+}
+
+.command-trigger {
+  border-radius: 999px;
+}
+
+.command-trigger kbd {
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Cards, panels, tables: flat, hairline, 12-16px radius            */
+/* ------------------------------------------------------------------ */
+
+.panel {
+  border-color: var(--hairline);
+  border-radius: var(--card-radius);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .metric {
+  box-shadow: none;
+}
+
+.panel-header h2 {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+
+th {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+td {
+  border-bottom-color: var(--hairline);
+}
+
+tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+/* Rows that open a record are clickable as a whole (app.js delegates the click). */
+#tab-content tbody tr:has(button[data-case]:not(:disabled)),
+#tab-content tbody tr:has(button[data-invoice]:not(:disabled)),
+#tab-content tbody tr:has(button[data-outbox]:not(:disabled)) {
+  cursor: pointer;
+}
+
+.cell-main {
+  font-weight: 600;
+}
+
+td .secondary.mono,
+.review-item .mono {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+/* Filter chips (TradingView screener): 32px, radius 8. */
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-chips .chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-chips .chip[aria-pressed="true"] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--canvas);
+}
+
+.chip-count {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Segmented controls look like range pills. */
+.view-switch {
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+
+.view-switch button {
+  min-height: 28px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Overview: next step, automation, KPI strip                       */
+/* ------------------------------------------------------------------ */
+
+.overview-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--gap-section);
+}
+
+@media (min-width: 1180px) {
+  .overview-top {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+    align-items: stretch;
+  }
+}
+
+.overview-top .action-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+  padding: 24px;
+  border-radius: var(--card-radius);
+}
+
+.overview-top .action-center h2 {
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.overview-top .automation-panel {
+  margin: 0;
+}
+
+.overview-main {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.overview-main .summary-grid.kpi-strip {
+  margin: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.overview-main .kpi-strip .metric-value {
+  font-size: 26px;
+  line-height: 32px;
+}
+
+@media (max-width: 759.98px) {
+  .overview-main .summary-grid.kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.next-steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.next-steps .step > button,
+.next-steps .step > .step-static {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  white-space: normal;
+}
+
+.next-steps .step-index {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.next-steps .step-text {
+  display: grid;
+  min-width: 0;
+}
+
+.next-steps .step-label {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.next-steps .step-note {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.next-steps .is-done .step-index {
+  background: var(--up-bg);
+  color: var(--up);
+}
+
+.next-steps .is-current > button,
+.next-steps .is-current > .step-static {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.next-steps .is-current .step-index {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.next-steps .is-current .step-note {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.gmail-progress {
+  margin-bottom: var(--gap-section);
+}
+
+@media (max-width: 759.98px) {
+  .next-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-top .action-center {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Automation card */
+.automation-panel .badge {
+  flex: none;
+}
+
+.automation-panel.tone-bad {
+  border-color: var(--danger-border);
+}
+
+.automation-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 0 var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--hairline);
+}
+
+.automation-facts > div {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+
+.automation-facts dt {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.automation-facts dd {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.automation-facts dd strong {
+  font-size: 14px;
+}
+
+.automation-facts .secondary {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.automation-panel .notice {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+}
+
+.automation-panel code {
+  font-size: 12px;
+}
+
+.redirect-banner {
+  border-color: var(--info-border);
+  background: var(--info-bg);
+}
+
+@media (max-width: 459.98px) {
+  .automation-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* KPI strip: Kraken/Binance tiles — uppercase label, big tabular value, bar. */
+.summary-grid.kpi-strip {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+}
+
+.kpi-strip .metric {
+  padding: 16px 18px 14px;
+  border-color: var(--hairline);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.kpi-strip .metric:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--accent-border);
+  box-shadow: none;
+  background: var(--surface);
+}
+
+.kpi-strip .metric::before {
+  display: none;
+}
+
+.kpi-strip .metric-label {
+  margin-bottom: 6px;
+  font-size: var(--kpi-label);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.kpi-strip .metric-value {
+  margin-bottom: 2px;
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.kpi-strip .metric-accent {
+  color: var(--text);
+}
+
+.kpi-strip .metric-visual {
+  margin-top: 10px;
+}
+
+.insight-kpi {
+  border-color: var(--hairline);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.insight-kpi .metric-label {
+  font-size: var(--kpi-label);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.insight-kpi .metric-value {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.insight-kpi.is-neutral .metric-value {
+  color: var(--text-muted);
+}
+
+/* Escalations: tone follows meaning (a missing score is a grey data gap). */
+.escalation-card.tone-warning { border-color: var(--warning-border); background: var(--warning-bg); }
+.escalation-card.tone-warning::before { background: var(--warning); }
+.escalation-card.tone-warning .escalation-link { color: var(--warning); }
+.escalation-card.tone-neutral { border-color: var(--border); background: var(--surface); }
+.escalation-card.tone-neutral::before { background: var(--chart-neutral); }
+.escalation-card.tone-neutral .escalation-link { color: var(--accent); }
+.escalation-card.tone-warning:hover:not(:disabled) { border-color: var(--warning); background: var(--warning-bg); }
+.escalation-card.tone-neutral:hover:not(:disabled) { border-color: var(--accent-border); background: var(--surface); }
+
+/* Review next: watchlist rows (name + id | amount + risk | action). */
+.review-next-panel .review-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  padding: 12px 0;
+  border-top-color: var(--hairline);
+}
+
+.review-item-figures {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-item-figures .score {
+  min-width: 96px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 639.98px) {
+  .review-next-panel .review-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .review-item-figures {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Area chart (Insights trend)                                      */
+/* ------------------------------------------------------------------ */
+
+.quote-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: var(--space-3);
+}
+
+.quote-value {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.quote-sub {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+.area-chart {
+  --up-line: var(--up);
+}
+
+.area-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.area-readout {
+  min-height: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.area-readout strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.area-ranges {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+
+.area-range {
+  min-height: 26px;
+  min-width: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.area-range[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / .12);
+}
+
+.chart-area {
+  margin: 0;
+}
+
+.chart-area-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-area-svg .area-grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.chart-area-svg .area-reference {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 1 4;
+  opacity: .7;
+}
+
+.chart-area-svg .area-axis {
+  font-size: 11px;
+}
+
+.chart-area-svg .chart-axis-label {
+  fill: var(--chart-axis);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-area-svg .area-pill rect {
+  fill: var(--area-colour);
+}
+
+.chart-area-svg .area-pill text {
+  fill: var(--canvas);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-area-svg .area-end {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chart-area-svg .area-crosshair {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.chart-area-svg .area-focus {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chart-area-svg [hidden] {
+  display: none;
+}
+
+.chart-area-svg .chart-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.area-note {
+  margin: 6px 0 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Dialogs: sticky decision and approval (trade-ticket pattern)     */
+/* ------------------------------------------------------------------ */
+
+#detail-dialog #approve-form {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: var(--space-4) calc(var(--space-6) * -1) calc(var(--space-6) * -1);
+  padding: 14px var(--space-6);
+  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
+  box-shadow: 0 -8px 24px rgb(var(--shadow-rgb) / var(--shadow-a2));
+}
+
+#detail-dialog #approve-form .checkbox-line {
+  flex: 1 1 380px;
+  margin: 0;
+}
+
+#detail-dialog #approve-form .action-note {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+@media (min-width: 1100px) {
+  /* Case review: evidence on the left, the decision always in view on the right. */
+  #detail-content:has(#resolve-form) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+
+  #detail-content:has(#resolve-form) > * {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  #detail-content:has(#resolve-form) > .form-section:has(#resolve-form) {
+    grid-column: 2;
+    grid-row: 1 / span 60;
+    position: sticky;
+    top: 88px;
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--card-radius);
+    background: var(--surface);
+  }
+
+  #detail-content:has(#resolve-form) > .form-section:has(#resolve-form) textarea {
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 639.98px) {
+  #detail-dialog #approve-form {
+    margin: var(--space-4) calc(var(--space-4) * -1) calc(var(--space-4) * -1);
+    padding: 12px var(--space-4);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 8. Lists and cards: denser, flatter                                 */
+/* ------------------------------------------------------------------ */
+
+.invoice-card .paper-lines {
+  display: none;
+}
+
+.invoice-card,
+.review-card {
+  border-color: var(--hairline);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.invoice-card:hover,
+.review-card:hover {
+  border-color: var(--accent-border);
+}
+
+.case-advanced-filters .hint {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+.inspect-toolbar,
+.bulk-toolbar:not(:has(#bulk-release-open:not(:disabled))) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Sidebar tip replaces the marketing block. */
+.sidebar-note kbd {
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Phones: one compact top bar and a bottom tab bar                 */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 639.98px) {
+  /* A filter/backdrop on the sidebar would become the containing block of the
+     fixed tab bar and pin it to the top; the sidebar is a plain block here. */
+  .sidebar,
+  :root[data-surface="glass"] .sidebar {
+    padding: var(--space-2) var(--space-4);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    filter: none;
+    transform: none;
+    contain: none;
+  }
+
+  #density-toggle {
+    display: none;
+  }
+
+  #navigation {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    margin: 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 -4px 16px rgb(var(--shadow-rgb) / var(--shadow-a1));
+  }
+
+  :root[data-surface="glass"] #navigation {
+    background: var(--glass-chrome);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+
+  #navigation .nav-button {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-width: 72px;
+    min-height: 48px;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  #navigation .nav-button.active::before {
+    top: 0;
+    bottom: auto;
+  }
+
+  #navigation .nav-count {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    min-width: 18px;
+    padding: 0 4px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  #navigation .nav-button {
+    position: relative;
+  }
+
+  main {
+    padding-bottom: 84px;
+  }
+
+  .toast-stack {
+    bottom: 76px;
+  }
+
+  .topbar-caption {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-surface="glass"] #navigation {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

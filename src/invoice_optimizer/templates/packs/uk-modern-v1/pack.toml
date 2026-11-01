@@ -1,0 +1,10 @@
+# Default pack. Column widths derive from \textwidth, so paper and margins are
+# profile choices. Python-side formatting for this pack is versioned by
+# renderer_version together with the pinned pack hash in formats.py.
+id = "uk-modern-v1"
+title = "UK modern (accent header, cards, totals panel)"
+renderer_version = "uk-modern-v1"
+template = "invoice.tex.j2"
+papers = ["a4", "letter"]
+profile_fields = ["paper", "margins_mm", "font", "date_format", "vat_summary", "footer_text",
+                  "logo", "colors", "labels", "columns", "payment", "seller"]

@@ -1,0 +1,103 @@
+name: invoice-optimizer
+
+x-app: &app
+  build: .
+  image: invoice-optimizer:local
+  environment: &app-environment
+    DATABASE_URL: postgresql+psycopg://invoice:${POSTGRES_PASSWORD:?Generate POSTGRES_PASSWORD in .env}@postgres:5432/invoice_optimizer
+    INVOICE_DATA_DIR: /app/var
+    INVOICE_API_TOKEN: ${INVOICE_API_TOKEN:?Run local bootstrap to generate INVOICE_API_TOKEN}
+    INVOICE_SETUP_TOKEN: ${INVOICE_SETUP_TOKEN:-}
+    INVOICE_ACTOR: ${INVOICE_ACTOR:-local-reviewer}
+    INVOICE_SYNTHETIC: "1"
+    INVOICE_PROVIDER: simulated
+    # An https INVOICE_DOCKER_PUBLIC_BASE_URL always makes cookies Secure.
+    INVOICE_SECURE_COOKIES: ${INVOICE_SECURE_COOKIES:-0}
+    INVOICE_BATCH_SIZE: ${INVOICE_BATCH_SIZE:-1000}
+    INVOICE_WORKER_BATCH_SIZE: ${INVOICE_WORKER_BATCH_SIZE:-500}
+    INVOICE_AUTO_CLOSE: ${INVOICE_AUTO_CLOSE:-1}
+    INVOICE_AUTO_DISPATCH: ${INVOICE_AUTO_DISPATCH:-1}
+    INVOICE_PUBLIC_BASE_URL: ${INVOICE_DOCKER_PUBLIC_BASE_URL:-http://127.0.0.1:8000}
+    INVOICE_GMAIL_EXPECTED_EMAIL: ${INVOICE_GMAIL_EXPECTED_EMAIL:-}
+    OMP_NUM_THREADS: "1"
+    OPENBLAS_NUM_THREADS: "1"
+    MKL_NUM_THREADS: "1"
+  volumes:
+    - invoice-data:/app/var
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: invoice
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: invoice_optimizer
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invoice -d invoice_optimizer"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    shm_size: 128mb
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  init-db:
+    <<: *app
+    command: ["python", "-m", "invoice_optimizer", "init-db"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  api:
+    <<: *app
+    command: ["python", "-m", "invoice_optimizer", "serve", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "invoice_optimizer", "worker"]
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+  demo:
+    <<: *app
+    profiles: ["demo"]
+    command: ["python", "-m", "invoice_optimizer", "demo", "--customers", "8", "--movements", "2000"]
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    healthcheck:
+      disable: true
+    restart: "no"
+
+volumes:
+  postgres-data:
+  invoice-data:

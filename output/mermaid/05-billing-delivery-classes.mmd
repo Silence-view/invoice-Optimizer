@@ -1,0 +1,209 @@
+classDiagram
+    direction TB
+
+    %% PROPOSED conceptual domain model. No implementation or capacity claim.
+    %% Customer is the same identity as in the movement-review class diagram.
+    %% Classes include acknowledgement because technical delivery is not proof of reading.
+
+    class Customer {
+        <<stable_identity>>
+        +UUID customer_id
+        +string legal_name
+        +string status
+        +resolveBillingProfile()
+    }
+
+    class ContactSetVersion {
+        <<immutable_contact_version>>
+        +UUID contact_version_id
+        +UUID customer_id
+        +int version_no
+        +string[] to_addresses
+        +string[] cc_addresses
+        +datetime valid_from
+        +string payload_hash
+        +validateRecipients()
+    }
+
+    class BillingSnapshot {
+        <<immutable_closure_evidence>>
+        +UUID snapshot_id
+        +UUID customer_id
+        +string period
+        +int captured_generation
+        +string input_watermarks_ref
+        +string movement_manifest_uri
+        +string manifest_hash
+        +string billable_component_manifest_ref
+        +string contract_and_rule_version_refs
+        +string counts_and_totals_by_currency_ref
+        +datetime frozen_at
+        +verifyCompleteness()
+        +reconcileTotals()
+        +freeze()
+    }
+
+    class Invoice {
+        <<legal_document_aggregate>>
+        +UUID invoice_id
+        +UUID customer_id
+        +UUID legal_issuer_id
+        +string document_type
+        +string legal_number
+        +UUID issued_version_id
+        +datetime issued_at
+        +UUID related_invoice_id
+        +issue(candidateVersion)
+        +referenceAdjustment()
+    }
+
+    class InvoiceVersion {
+        <<immutable_document_content>>
+        +UUID invoice_version_id
+        +UUID invoice_id
+        +UUID snapshot_id
+        +int revision_no
+        +string document_number
+        +date document_date
+        +string currency
+        +Decimal net_total
+        +Decimal tax_total
+        +Decimal gross_total
+        +string lines_ref
+        +string data_hash
+        +string template_version
+        +string pdf_uri
+        +string pdf_hash
+        +validateTotals()
+        +renderPDF()
+        +seal()
+    }
+
+    class DeliveryPackage {
+        <<immutable_delivery_payload>>
+        +UUID package_id
+        +UUID invoice_version_id
+        +UUID contact_version_id
+        +string sender_identity
+        +string subject
+        +string exact_body_ref
+        +string[] resolved_recipients
+        +string[] attachment_hashes
+        +string package_fingerprint
+        +datetime created_at
+        +validatePackage()
+        +computeFingerprint()
+    }
+
+    class Approval {
+        <<authenticated_human_decision>>
+        +UUID approval_id
+        +UUID package_id
+        +string package_fingerprint
+        +string decision
+        +UUID actor_id
+        +string policy_version
+        +datetime decided_at
+        +datetime revoked_at
+        +approve()
+        +reject()
+        +revoke()
+        +isValid()
+    }
+
+    class OutboxMessage {
+        <<transactional_dispatch_job>>
+        +UUID outbox_id
+        +UUID package_id
+        +UUID approval_id
+        +string logical_dispatch_key
+        +string state
+        +datetime next_attempt_at
+        +datetime lease_until
+        +string resend_authorization_ref
+        +claimAndReserveWithApprovalLock()
+        +scheduleRetry()
+        +markUncertain()
+    }
+
+    class SendAttempt {
+        <<external_transport_attempt>>
+        +UUID attempt_id
+        +UUID outbox_id
+        +datetime started_at
+        +datetime finished_at
+        +string provider_request_key
+        +string provider_message_id
+        +string result
+        +string error_code
+        +submit()
+        +recordResult()
+        +reconcileOutcome()
+    }
+
+    class ProviderEvent {
+        <<append_only_provider_evidence>>
+        +UUID provider_event_id
+        +string provider_event_key
+        +string provider_message_id
+        +UUID attempt_id
+        +string[] recipients
+        +string event_type
+        +datetime occurred_at
+        +datetime received_at
+        +string authenticity_method
+        +string authenticity_status
+        +string raw_envelope_uri
+        +string payload_hash
+        +verifyAuthenticity()
+        +deduplicate()
+        +correlate()
+    }
+
+    class CustomerAcknowledgement {
+        <<explicit_authenticated_action>>
+        +UUID acknowledgement_id
+        +UUID package_id
+        +UUID authenticated_account_id
+        +string action
+        +datetime confirmed_at
+        +string evidence_ref
+        +confirmReceipt()
+    }
+
+    Customer "1" --> "0..*" ContactSetVersion : owns contact history
+    Customer "1" --> "0..*" BillingSnapshot : has frozen periods
+    Customer "1" --> "0..*" Invoice : receives documents
+
+    Invoice "1" --> "1..*" InvoiceVersion : has candidate versions
+    BillingSnapshot "1" --> "0..*" InvoiceVersion : supports
+    Invoice "0..*" --> "0..1" Invoice : adjusts or references
+
+    InvoiceVersion "1" --> "0..*" DeliveryPackage : rendered for delivery
+    ContactSetVersion "1" --> "0..*" DeliveryPackage : resolves recipients
+    DeliveryPackage "1" --> "0..*" Approval : has decision history
+    DeliveryPackage "1" --> "0..*" OutboxMessage : schedules dispatch
+    Approval "1" --> "0..1" OutboxMessage : authorizes job
+    OutboxMessage "1" --> "0..*" SendAttempt : records attempts
+    SendAttempt "0..1" --> "0..*" ProviderEvent : correlated evidence
+    DeliveryPackage "1" --> "0..*" CustomerAcknowledgement : receives confirmation
+
+    note for BillingSnapshot "PROPOSED MODEL, NOT IMPLEMENTED. A snapshot pins exact movement versions, stable billable components, source cutoffs, contracts, rates and rounding rules. The manifests reference full datasets without loading millions of rows into the application. Completeness, included/excluded/suspense counts and per-currency totals must reconcile before freeze. A later correction creates a new snapshot."
+
+    note for Invoice "issued_version_id and issued_at are null before issuance. issue() is a single guarded transition selecting exactly one owned version; it atomically checks eligibility and reserves each stable billable allocation for its billing purpose. Uniqueness is not based only on snapshot/version IDs. The legal number is unique within its configured issuer/numbering scope. Issuance and email transport are separate states. Post-issue changes use the required adjustment document, never an in-place rewrite."
+
+    note for InvoiceVersion "Final document number, document date, line data, totals and PDF are frozen before delivery approval. The version number/date must agree with the Invoice root's issuance policy; allocation and void-number policy are explicit. Additional candidates do not create additional charges. All accounting amounts use exact Decimal with a pinned rounding rule. UK document type, tax-point, numbering and issuance policies require business/accounting validation. Invoice lines and the billing-allocation ledger are omitted from this conceptual sheet."
+
+    note for DeliveryPackage "package_fingerprint binds the exact PDF bytes, message body and subject, sender identity, recipient roles/addresses and every attachment. Resolved recipients are frozen from ContactSetVersion. Changing any bound field creates a new package requiring approval. No undefined package-version field is used. Lifecycle status and supersession are recorded separately from immutable payload content."
+
+    note for Approval "An authenticated actor approves package_id plus package_fingerprint after viewing the exact PDF, message and recipients. The API validates permission, current invoice/snapshot generation and policy. Record valid approval and initial outbox job atomically, with the required issuance transition explicitly coordinated. A rejected or revoked decision cannot authorize dispatch. Each decision creates at most one job; a deliberate resend needs a new recorded approval."
+
+    note for OutboxMessage "logical_dispatch_key is unique for one intended delivery. Supersession/revocation and worker reservation lock the same package/job authority boundary. Before reservation, revoke approval and cancel queued work atomically. After reservation, a provider call may already be in flight: cancellation is best-effort. Retrying creates a new attempt; an intentional resend uses a distinct authorized dispatch purpose."
+
+    note for SendAttempt "Database idempotency does not guarantee physically exactly-once email. A timeout or expired lease can hide provider acceptance: record UNCERTAIN and reconcile before another submission. Automatic replay needs resolved evidence or a documented provider idempotency guarantee. Provider acceptance is not recipient-server delivery and neither establishes human reading."
+
+    note for ProviderEvent "attempt_id is nullable: an event may remain unmatched while correlation is pending, matching multiplicity 0..1. Retain the original multi-recipient envelope. Raw evidence is append-only; subsequent verification/correlation decisions append audit records and the fields expose their projection. Verify source authenticity using the configured signed-webhook mechanism or authenticated provider polling before deriving delivery state. Scope event deduplication by provider/account. Preserve occurrence and receipt times; events can be duplicated, reordered or followed by later bounce evidence. Recipient-level state is a projection, not an overwrite of event history."
+
+    note for CustomerAcknowledgement "An authorized authenticated customer account performs an explicit receipt-confirmation action for this package. Store this separately from delivery, download, click and open signals. It records the account action; it does not prove that a person read or understood the document."
+
+    note for Customer "One monthly customer delivery does not by itself determine one legal invoice: issuer entities, currencies and document rules may require separate documents. This is a conceptual subset. Authentication, artifact storage, audit records, contract/rule registries, allocation ledger and recipient-state projections are referenced or described rather than fully expanded."
