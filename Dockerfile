@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MKL_NUM_THREADS=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra poppler-utils \
+    && apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-lang-greek tex-gyre poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 invoice \
     && useradd --uid 10001 --gid invoice --create-home invoice

@@ -59,7 +59,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             texlive-latex-base texlive-latex-recommended texlive-latex-extra \
-            texlive-fonts-recommended texlive-fonts-extra poppler-utils
+            texlive-fonts-recommended texlive-fonts-extra texlive-lang-greek tex-gyre poppler-utils
           pdflatex --version | head -n 1
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
