@@ -11,7 +11,7 @@ owner may decline any change. For anything security-related, follow
 Requirements: Python 3.11+, PostgreSQL 15+, `pdflatex` with the LaTeX packages
 listed in the `Dockerfile` (on Debian/Ubuntu: `texlive-latex-base`,
 `texlive-latex-recommended`, `texlive-latex-extra`, `texlive-fonts-recommended`,
-`texlive-fonts-extra`), and Poppler (`pdfinfo`, `pdftoppm`) for page previews.
+`texlive-fonts-extra`, `texlive-lang-greek`, `tex-gyre`), and Poppler (`pdfinfo`, `pdftoppm`) for page previews.
 
 ```bash
 python3 -m venv .venv
