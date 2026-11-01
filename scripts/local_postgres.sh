@@ -26,7 +26,7 @@ fi
 if ! "$PG_BIN/pg_ctl" -D "$PG_DATA" status >/dev/null 2>&1; then
   "$PG_BIN/pg_ctl" -D "$PG_DATA" -l "$PWD/var/postgres.log" -o "-p $PG_PORT -h 127.0.0.1 -k $PG_SOCKET -c shared_buffers=128MB -c max_connections=30" start
 fi
-if ! "$PG_BIN/psql" -h "$PG_SOCKET" -p "$PG_PORT" -U invoice -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname='invoice_optimizer'" | rg -q '^1$'; then
+if ! "$PG_BIN/psql" -h "$PG_SOCKET" -p "$PG_PORT" -U invoice -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname='invoice_optimizer'" | grep -qx '1'; then
   "$PG_BIN/createdb" -h "$PG_SOCKET" -p "$PG_PORT" -U invoice invoice_optimizer
 fi
 printf 'Project PostgreSQL ready on 127.0.0.1:%s\n' "$PG_PORT"
